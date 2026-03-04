@@ -1,0 +1,42 @@
+name: Update Wiki Chart
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+            API_URL: "${{ vars.WIKI_API }}"
+            WIKI_USER: "${{ secrets.WIKI_USER || vars.WIKI_USER }}"
+            DISPLAY_NAME: "${{ secrets.DISPLAY_NAME || vars.DISPLAY_NAME }}"
+            EXCLUDED_NAMESPACES: "${{ vars.EXCLUDED_NAMESPACES }}"
+            USER_AGENT: "${{ secrets.USER_AGENT || vars.USER_AGENT }}"
+            WIKI_API: "${{ vars.WIKI_API }}"
+            WIKI_PAGE: "${{ secrets.WIKI_PAGE || vars.WIKI_PAGE }}"
+            BOT_USERNAME: "${{ secrets.BOT_USERNAME }}"
+            BOT_PASSWORD: "${{ secrets.BOT_PASSWORD }}"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run bot.py
+        run: python bot.py
+
+      - name: Upload echart_option.json to wiki
+        run: python upload_to_wiki.py

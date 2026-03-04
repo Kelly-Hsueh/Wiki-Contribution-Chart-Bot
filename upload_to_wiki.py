@@ -1,0 +1,272 @@
+from __future__ import annotations
+
+import os
+import sys
+from typing import Any
+
+import requests
+
+
+def fail(message: str, detail: Any = None) -> None:
+    if detail is not None:
+        print(f"ERROR: {message}: {detail}", file=sys.stderr)
+    else:
+        print(f"ERROR: {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def warn(message: str) -> None:
+    print(f"::warning::{message}")
+
+
+def post_edit(
+    session: requests.Session,
+    wiki_api: str,
+    wiki_page: str,
+    new_text: str,
+    csrf_token: str,
+    timeout: int,
+    max_lag: int,
+    assert_mode: str,
+    mark_as_bot: bool,
+) -> dict[str, Any]:
+    payload = {
+        "action": "edit",
+        "title": wiki_page,
+        "text": new_text,
+        "token": csrf_token,
+        "summary": "Automated update: echart_option.json",
+        "format": "json",
+        "assert": assert_mode,
+        "maxlag": max_lag,
+    }
+    if mark_as_bot:
+        payload["bot"] = "1"
+
+    response = session.post(
+        wiki_api,
+        data=payload,
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def is_bot_permission_error(result: dict[str, Any]) -> bool:
+    error = result.get("error")
+    if not isinstance(error, dict):
+        return False
+
+    code = str(error.get("code", "")).lower()
+    info = str(error.get("info", "")).lower()
+    return code == "permissiondenied" and "bot" in info
+
+
+def main() -> None:
+    wiki_api = os.environ.get("WIKI_API", "").strip()
+    wiki_page = os.environ.get("WIKI_PAGE", "").strip()
+    bot_username = os.environ.get("BOT_USERNAME", "").strip()
+    bot_password = os.environ.get("BOT_PASSWORD", "").strip()
+    user_agent = os.environ.get(
+        "USER_AGENT",
+        "WikiChartBot/1.0 (https://github.com/your-org/your-repo; "
+        "contact@example.org) requests/2.x",
+    ).strip()
+
+    if not wiki_api:
+        fail("Missing WIKI_API (set repository variable or env)")
+    if not wiki_page:
+        fail("Missing WIKI_PAGE (set repository variable or env)")
+    if not bot_username:
+        fail("Missing BOT_USERNAME secret")
+    if not bot_password:
+        fail("Missing BOT_PASSWORD secret")
+
+    content_path = "echart_option.json"
+    if not os.path.exists(content_path):
+        fail("echart_option.json not found; ensure bot.py generated it")
+
+    try:
+        with open(content_path, "r", encoding="utf-8") as file:
+            new_text = file.read()
+    except Exception as exc:
+        fail("Failed to read echart_option.json", str(exc))
+
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": user_agent,
+        "Accept-Encoding": "gzip",
+    })
+    timeout = 30
+    max_lag = 5
+    assert_mode = "user"
+
+    try:
+        r1 = session.get(
+            wiki_api,
+            params={
+                "action": "query",
+                "meta": "tokens",
+                "type": "login",
+                "format": "json",
+                "maxlag": max_lag,
+            },
+            timeout=timeout,
+        )
+        r1.raise_for_status()
+        d1 = r1.json()
+    except Exception as exc:
+        fail("Failed to fetch login token", str(exc))
+
+    login_token = d1.get("query", {}).get("tokens", {}).get("logintoken")
+    if not login_token:
+        fail("Login token missing", d1)
+
+    try:
+        r2 = session.post(
+            wiki_api,
+            data={
+                "action": "login",
+                "lgname": bot_username,
+                "lgpassword": bot_password,
+                "lgtoken": login_token,
+                "format": "json",
+                "maxlag": max_lag,
+            },
+            timeout=timeout,
+        )
+        r2.raise_for_status()
+        d2 = r2.json()
+    except Exception as exc:
+        fail("Login request failed", str(exc))
+
+    login_result = d2.get("login", {}).get("result")
+    if login_result != "Success":
+        fail("Login failed", d2)
+
+    try:
+        r_user = session.get(
+            wiki_api,
+            params={
+                "action": "query",
+                "meta": "userinfo",
+                "uiprop": "groups",
+                "format": "json",
+                "assert": assert_mode,
+                "maxlag": max_lag,
+            },
+            timeout=timeout,
+        )
+        r_user.raise_for_status()
+        d_user = r_user.json()
+    except Exception as exc:
+        fail("Failed to fetch user groups", str(exc))
+
+    user_groups = d_user.get("query", {}).get("userinfo", {}).get("groups", [])
+    has_bot_group = isinstance(user_groups, list) and "bot" in user_groups
+    if has_bot_group:
+        assert_mode = "bot"
+
+    if not has_bot_group:
+        warn(f"用户 {bot_username or 'BOT_USERNAME'} 未持有机器人（bot）用户组；"
+             "仍会继续执行编辑。"
+             "持续以非机器人权限执行自动化编辑可能导致被封禁。")
+
+    try:
+        r3 = session.get(
+            wiki_api,
+            params={
+                "action": "query",
+                "meta": "tokens",
+                "format": "json",
+                "assert": assert_mode,
+                "maxlag": max_lag,
+            },
+            timeout=timeout,
+        )
+        r3.raise_for_status()
+        d3 = r3.json()
+    except Exception as exc:
+        fail("Failed to fetch CSRF token", str(exc))
+
+    csrf_token = d3.get("query", {}).get("tokens", {}).get("csrftoken")
+    if not csrf_token:
+        fail("CSRF token missing", d3)
+
+    try:
+        r4 = session.get(
+            wiki_api,
+            params={
+                "action": "query",
+                "prop": "revisions",
+                "titles": wiki_page,
+                "rvslots": "main",
+                "rvprop": "content",
+                "format": "json",
+                "formatversion": "2",
+                "assert": assert_mode,
+                "maxlag": max_lag,
+            },
+            timeout=timeout,
+        )
+        r4.raise_for_status()
+        d4 = r4.json()
+    except Exception as exc:
+        fail("Failed to fetch current page content", str(exc))
+
+    pages = d4.get("query", {}).get("pages", [])
+    current_text = ""
+    if isinstance(pages, list) and pages:
+        revs = pages[0].get("revisions", [])
+        if revs and isinstance(revs, list):
+            current_text = revs[0].get("slots", {}).get("main",
+                                                        {}).get("content", "")
+
+    if current_text == new_text:
+        print("No content changes detected; skip edit.")
+        raise SystemExit(0)
+
+    try:
+        d5 = post_edit(
+            session=session,
+            wiki_api=wiki_api,
+            wiki_page=wiki_page,
+            new_text=new_text,
+            csrf_token=csrf_token,
+            timeout=timeout,
+            max_lag=max_lag,
+            assert_mode=assert_mode,
+            mark_as_bot=True,
+        )
+    except Exception as exc:
+        fail("Edit request failed", str(exc))
+
+    if d5.get("edit",
+              {}).get("result") != "Success" and is_bot_permission_error(d5):
+        if has_bot_group:
+            warn(f"用户 {bot_username or 'BOT_USERNAME'} 声明包含 bot 用户组，"
+                 "但带 bot 标记编辑仍被拒绝；"
+                 "本次将继续提交但不附加 bot 标记。")
+        try:
+            d5 = post_edit(
+                session=session,
+                wiki_api=wiki_api,
+                wiki_page=wiki_page,
+                new_text=new_text,
+                csrf_token=csrf_token,
+                timeout=timeout,
+                max_lag=max_lag,
+                assert_mode=assert_mode,
+                mark_as_bot=False,
+            )
+        except Exception as exc:
+            fail("Edit retry without bot flag failed", str(exc))
+
+    if d5.get("edit", {}).get("result") != "Success":
+        fail("Wiki edit failed", d5)
+
+    print("Wiki page updated successfully.")
+
+
+if __name__ == "__main__":
+    main()

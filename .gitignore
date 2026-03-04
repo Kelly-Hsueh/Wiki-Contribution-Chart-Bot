@@ -1,0 +1,42 @@
+# 忽略示例/测试文件
+Current.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 生成的文件（本地测试用）
+echart_option.json
+
+# 本地环境变量
+.env
+.env.*
+!.env.example
