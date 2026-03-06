@@ -281,11 +281,9 @@ def main() -> None:
         raise SystemExit(0)
 
     edit_tag_candidates = parse_edit_tag_candidates(edit_tag_candidates_raw)
-    print(
-        "Edit tag configuration: "
-        f"EDIT_TAG_CANDIDATES_raw={edit_tag_candidates_raw!r}, "
-        f"parsed_candidates={edit_tag_candidates!r}"
-    )
+    print("Edit tag configuration: "
+          f"EDIT_TAG_CANDIDATES_raw={edit_tag_candidates_raw!r}, "
+          f"parsed_candidates={edit_tag_candidates!r}")
     if not edit_tag_candidates:
         warn("未解析到任何可用编辑标签；本次不会发送 tags 参数。"
              "请检查 EDIT_TAG_CANDIDATES 是否为空。")
