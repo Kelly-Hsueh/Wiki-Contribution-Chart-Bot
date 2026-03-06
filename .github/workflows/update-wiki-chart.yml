@@ -21,6 +21,7 @@ jobs:
             WIKI_PAGE: "${{ secrets.WIKI_PAGE || vars.WIKI_PAGE }}"
             BOT_USERNAME: "${{ secrets.BOT_USERNAME }}"
             BOT_PASSWORD: "${{ secrets.BOT_PASSWORD }}"
+            SUMMARY: "${{ github.event_name == 'workflow_dispatch' && 'Semiautomatic edit operated by a human user' || 'Automated update datapage for the contribution ECharts (JSON)' }}"
 
     steps:
       - name: Checkout

@@ -30,14 +30,14 @@ def post_edit(
     assert_mode: str,
     mark_as_bot: bool,
     tags: str | None,
+    summary: str,
 ) -> dict[str, Any]:
     payload = {
         "action": "edit",
         "title": wiki_page,
         "text": new_text,
         "token": csrf_token,
-        "summary":
-        "Automated update datapage for the contribution ECharts (JSON)",
+        "summary": summary,
         "format": "json",
         "assert": assert_mode,
         "maxlag": max_lag,
@@ -104,6 +104,10 @@ def main() -> None:
     bot_password = os.environ.get("BOT_PASSWORD", "").strip()
     edit_tag_candidates_raw = os.environ.get("EDIT_TAG_CANDIDATES",
                                              "Bot").strip()
+    summary = os.environ.get(
+        "SUMMARY",
+        "Automated update datapage for the contribution ECharts (JSON)").strip(
+        )
     user_agent = os.environ.get(
         "USER_AGENT",
         "WikiChartBot/1.0 (https://github.com/your-org/your-repo; "
@@ -288,6 +292,7 @@ def main() -> None:
                 assert_mode=assert_mode,
                 mark_as_bot=mark_as_bot,
                 tags=tags,
+                summary=summary,
             )
         except Exception as exc:
             fail("Edit request failed", str(exc))
