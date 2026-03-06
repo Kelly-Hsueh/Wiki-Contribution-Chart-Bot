@@ -337,9 +337,6 @@ def build_option(display_name: str, x_labels: list[str],
                 "dataZoom": {
                     "yAxisIndex": "none"
                 },
-                "dataView": {
-                    "readOnly": True
-                },
                 "magicType": {
                     "type": ["line", "bar"]
                 },
