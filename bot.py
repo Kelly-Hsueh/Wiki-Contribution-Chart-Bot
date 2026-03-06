@@ -379,7 +379,7 @@ def build_option(display_name: str, x_labels: list[str],
             "label": {
                 "formatter": "{c}",
                 "distance": 0,
-                "backgroundColor": "#fff",
+                "backgroundColor": "transparent",
                 "padding": 1,
             },
             "data": series_data,
