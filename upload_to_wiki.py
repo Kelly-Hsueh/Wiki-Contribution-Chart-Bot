@@ -102,7 +102,7 @@ def main() -> None:
     bot_username = os.environ.get("BOT_USERNAME", "").strip()
     bot_password = os.environ.get("BOT_PASSWORD", "").strip()
     edit_tag_candidates_raw = os.environ.get("EDIT_TAG_CANDIDATES",
-                                             "Bot,Automation tool").strip()
+                                             "Bot").strip()
     user_agent = os.environ.get(
         "USER_AGENT",
         "WikiChartBot/1.0 (https://github.com/your-org/your-repo; "
@@ -296,8 +296,8 @@ def main() -> None:
 
         if is_tag_error(d5) and tags:
             if not warned_tag_fallback:
-                warn("目标站点可能不支持部分变更标签（例如 Automation tool）；"
-                     "将自动回退到更少标签或不带标签继续尝试。")
+                warn("目标站点可能不支持部分变更标签；"
+                     "将自动回退到不带标签继续尝试。")
                 warned_tag_fallback = True
             continue
 
