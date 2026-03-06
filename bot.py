@@ -53,8 +53,6 @@ def _parse_excluded_namespaces(raw_value: str) -> set[int]:
         11,
         13,
         15,
-        275,
-        711,
         829,
     }
 
