@@ -289,12 +289,12 @@ def main() -> None:
     warned_bot_fallback = False
     warned_tag_fallback = False
     attempt_logs: list[str] = []
+    success_attempt_context: str | None = None
 
     for attempt_index, (mark_as_bot, tags) in enumerate(attempts, start=1):
-        attempt_context = (
-            f"attempt={attempt_index}/{len(attempts)}, "
-            f"mark_as_bot={mark_as_bot}, tags={tags!r}"
-        )
+        attempt_context = (f"attempt={attempt_index}/{len(attempts)}, "
+                           f"mark_as_bot={mark_as_bot}, tags={tags!r}")
+        print(f"Edit attempt started: {attempt_context}")
         try:
             d5 = post_edit(
                 session=session,
@@ -313,6 +313,8 @@ def main() -> None:
             fail(f"Edit request failed ({attempt_context})", str(exc))
 
         if d5.get("edit", {}).get("result") == "Success":
+            success_attempt_context = attempt_context
+            print(f"Edit attempt succeeded: {attempt_context}")
             break
 
         error_text = format_api_error(d5)
@@ -328,11 +330,17 @@ def main() -> None:
             continue
 
         if is_bot_permission_error(d5) and mark_as_bot:
-            if has_bot_group and not warned_bot_fallback:
-                warn(f"用户 {bot_username or 'BOT_USERNAME'} 声明包含 bot 用户组，"
-                     "但标记此编辑为机器人编辑被拒绝；"
-                     "本次将继续提交但不标记此编辑为机器人编辑。"
-                     f"失败详情：{error_text}")
+            if not warned_bot_fallback:
+                if has_bot_group:
+                    warn(f"用户 {bot_username or 'BOT_USERNAME'} 声明包含 bot 用户组，"
+                         "但标记此编辑为机器人编辑被拒绝；"
+                         "本次将继续提交但不标记此编辑为机器人编辑。"
+                         f"失败详情：{error_text}")
+                else:
+                    warn(f"用户 {bot_username or 'BOT_USERNAME'} 未持有 bot 用户组，"
+                         "本次 bot=1 编辑被拒绝，"
+                         "将回退到不带 bot 标记继续尝试。"
+                         f"失败详情：{error_text}")
             warned_bot_fallback = True
             continue
 
@@ -343,6 +351,9 @@ def main() -> None:
             "last_response": d5,
             "attempt_logs": attempt_logs,
         })
+
+    if success_attempt_context is not None:
+        print(f"Final successful edit path: {success_attempt_context}")
 
     print("Wiki page updated successfully.")
 
