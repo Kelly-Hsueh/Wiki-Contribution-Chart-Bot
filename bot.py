@@ -303,7 +303,7 @@ def build_option(display_name: str, x_labels: list[str],
     option: dict[str, Any] = {
         "title": {
             "text": f"{display_name}的编辑历史",
-            "subtext": f"按月统计次数\n排除“{{ns:2}}”和讨论命名空间\n（截至 {generated_time}）",
+            "subtext": f"按月统计次数\n排除“{{{{ns:2}}}}”和讨论命名空间\n（截至 {generated_time}）",
             "left": "center",
             "itemGap": 10,
             "subtextStyle": {
