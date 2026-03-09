@@ -41,24 +41,11 @@ def _load_env_file(env_path: str = ".env") -> None:
 _load_env_file()
 
 
-def _parse_excluded_namespaces(raw_value: str) -> set[int]:
-    """将逗号分隔的命名空间字符串解析为整数集合。"""
-    default_namespaces: set[int] = {
-        1,
-        2,
-        3,
-        5,
-        7,
-        9,
-        11,
-        13,
-        15,
-        829,
-    }
-
+def _parse_excluded_namespaces(raw_value: str) -> set[int] | None:
+    """将逗号分隔的命名空间字符串解析为整数集合。空值表示自动推断。"""
     value = raw_value.strip()
     if not value:
-        return default_namespaces
+        return None
 
     namespace_ids: set[int] = set()
     for part in value.split(","):
@@ -115,7 +102,7 @@ API_URL: str = os.environ.get("API_URL", "").strip()  # 必填：目标站点 AP
 USER: str = os.environ.get("WIKI_USER", "").strip()  # 必填：统计目标用户名
 DISPLAY_NAME: str = os.environ.get(
     "DISPLAY_NAME", "").strip() or USER  # 用于图表显示的别名，默认等效 WIKI_USER
-EXCLUDED_NAMESPACES: set[int] = _parse_excluded_namespaces(
+EXCLUDED_NAMESPACES: set[int] | None = _parse_excluded_namespaces(
     os.environ.get("EXCLUDED_NAMESPACES", ""))
 NAMESPACE_MODE: str = _parse_namespace_mode(
     os.environ.get("NAMESPACE_MODE", "top"))
@@ -282,6 +269,28 @@ def fetch_all_contribs(api_url: str, user: str) -> list[dict[str, Any]]:
     return all_contribs
 
 
+def _auto_excluded_namespaces_from_contribs(
+    contribs: list[dict[str, Any]],
+) -> set[int]:
+    detected_namespaces: set[int] = set()
+    for item in contribs:
+        ns = item.get("ns")
+        if isinstance(ns, int):
+            detected_namespaces.add(ns)
+
+    # 自动排除用户命名空间（2）和奇数命名空间（常见讨论页）。
+    return {ns_id for ns_id in detected_namespaces if ns_id == 2 or ns_id % 2 == 1}
+
+
+def _resolve_excluded_namespaces(
+    contribs: list[dict[str, Any]],
+    configured_excluded_namespaces: set[int] | None,
+) -> set[int]:
+    if configured_excluded_namespaces is not None:
+        return configured_excluded_namespaces
+    return _auto_excluded_namespaces_from_contribs(contribs)
+
+
 def filter_namespace(contribs: list[dict[str, Any]],
                      excluded_namespaces: set[int]) -> list[dict[str, Any]]:
     """过滤掉指定命名空间。"""
@@ -308,7 +317,14 @@ def main() -> None:
     try:
         _validate_required_config()
         all_contribs = fetch_all_contribs(API_URL, USER)
-        filtered_contribs = filter_namespace(all_contribs, EXCLUDED_NAMESPACES)
+        resolved_excluded_namespaces = _resolve_excluded_namespaces(
+            all_contribs,
+            EXCLUDED_NAMESPACES,
+        )
+        filtered_contribs = filter_namespace(
+            all_contribs,
+            resolved_excluded_namespaces,
+        )
 
         print(f"统计总编辑数（过滤后）: {len(filtered_contribs)}")
 
@@ -318,7 +334,7 @@ def main() -> None:
             contribs=filtered_contribs,
             generated_time=_build_generated_time(),
             chart_series_type=CHART_SERIES_TYPE,
-            excluded_namespaces=EXCLUDED_NAMESPACES,
+            excluded_namespaces=resolved_excluded_namespaces,
             namespace_mode=NAMESPACE_MODE,
             top_namespace_limit=TOP_NAMESPACE_LIMIT,
         )
