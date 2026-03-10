@@ -92,8 +92,7 @@ def _parse_chart_series_type(raw_value: str) -> str:
         return "bar"
     if value not in {"bar", "line"}:
         raise RuntimeError(
-            "环境变量 CHART_SERIES_TYPE 仅支持 bar 或 line，例如 CHART_SERIES_TYPE=bar"
-        )
+            "环境变量 CHART_SERIES_TYPE 仅支持 bar 或 line，例如 CHART_SERIES_TYPE=bar")
     return value
 
 
@@ -110,7 +109,8 @@ TOP_NAMESPACE_LIMIT: int = _parse_top_namespace_limit(
     os.environ.get("TOP_NAMESPACE_LIMIT", "10"))
 CHART_SERIES_TYPE: str = _parse_chart_series_type(
     os.environ.get("CHART_SERIES_TYPE", "bar"))
-CHART_STYLE = parse_chart_style(os.environ.get("CHART_STYLE", "namespace_stacked"))
+CHART_STYLE = parse_chart_style(
+    os.environ.get("CHART_STYLE", "namespace_stacked"))
 OUTPUT_FILE: str = "echart_option.json"
 REQUEST_TIMEOUT_SECONDS: int = 30
 
@@ -124,7 +124,7 @@ MAX_LAG: int = 5  # 最大数据库延迟（秒），用于非交互式任务
 BOT_LOGIN_USERNAME: str = os.environ.get("BOT_USERNAME", "").strip()
 BOT_LOGIN_PASSWORD: str = os.environ.get("BOT_PASSWORD", "").strip()
 USERCONTRIBS_LIMIT: str = "max"
-USERCONTRIBS_FALLBACK_LIMIT: str = "500"
+USERCONTRIBS_FALLBACK_LIMIT: str = "499"
 
 
 def _validate_required_config() -> None:
@@ -270,8 +270,7 @@ def fetch_all_contribs(api_url: str, user: str) -> list[dict[str, Any]]:
 
 
 def _auto_excluded_namespaces_from_contribs(
-    contribs: list[dict[str, Any]],
-) -> set[int]:
+        contribs: list[dict[str, Any]]) -> set[int]:
     detected_namespaces: set[int] = set()
     for item in contribs:
         ns = item.get("ns")
@@ -279,7 +278,10 @@ def _auto_excluded_namespaces_from_contribs(
             detected_namespaces.add(ns)
 
     # 自动排除用户命名空间（2）和奇数命名空间（常见讨论页）。
-    return {ns_id for ns_id in detected_namespaces if ns_id == 2 or ns_id % 2 == 1}
+    return {
+        ns_id
+        for ns_id in detected_namespaces if ns_id == 2 or ns_id % 2 == 1
+    }
 
 
 def _resolve_excluded_namespaces(
