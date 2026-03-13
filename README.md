@@ -4,9 +4,9 @@
 
 ## 文件结构
 
-- `bot.py`：使用 usercontribs 拉取用户贡献并生成 ECharts option JSON
-- `upload_to_wiki.py`：使用 edit 上传生成的 JSON 到指定 MediaWiki 页面
-- `.github/workflows/update-wiki-chart.yml`：定时（或手动）运行 bot.py 和 upload_to_wiki.py 的 GitHub Actions Workflow
+- `generate_chart_json.py`：使用 usercontribs 拉取用户贡献并生成 ECharts option JSON
+- `publish_chart_json.py`：使用 edit 上传生成的 JSON 到指定 MediaWiki 页面
+- `.github/workflows/update-wiki-chart.yml`：定时（或手动）运行 generate_chart_json.py 和 publish_chart_json.py 的 GitHub Actions Workflow
 - `.env.example`：本地运行时的环境变量示例文件
 
 ## 安全说明
@@ -100,9 +100,9 @@
 
 > 仓库可见性提示：将仓库设为 Public 通常可减少（或避免）GitHub Actions Minutes 的消耗；具体以 GitHub 当前计费政策为准。
 
-## bot.py 配置（可选）
+## generate_chart_json.py 配置（可选）
 
-推荐通过环境变量配置，无需修改 `bot.py` 源码：
+推荐通过环境变量配置，无需修改 `generate_chart_json.py` 源码：
 
 - `EXCLUDED_NAMESPACES`：排除命名空间（逗号分隔整数；留空时自动排除 `ns=2`(用户) 与奇数命名空间（讨论页））
 - `CHART_STYLE`：图表方案（`namespace_stacked` 或 `monthly_total`，默认 `namespace_stacked`）
@@ -114,7 +114,8 @@
   - 若 `WIKI_USER` 包含多个用户（以 `|` 或 `%7C` 分隔），只使用第一个用户作为 `DISPLAY_NAME`
 
 **注意：**
-- `API_URL` 和 `USER` 从环境变量读取，在 Actions 中会自动使用 Secrets/Variables 配置
+- API 地址支持两种变量名：`WIKI_API`（推荐）或 `API_URL`（兼容旧配置），任意一个即可
+- `WIKI_USER` 从环境变量读取，在 Actions 中会自动使用 Secrets/Variables 配置
 - `EXCLUDED_NAMESPACES` 也支持从 Variables/.env 读取（逗号分隔整数）
 - `CHART_STYLE`、`NAMESPACE_MODE`、`TOP_NAMESPACE_LIMIT` 与 `CHART_SERIES_TYPE` 也支持从 Variables/.env 读取
 - `USER_AGENT` 也可通过 Variables 统一配置（`vars.USER_AGENT`）
@@ -135,8 +136,8 @@
 - 支持手动触发（`workflow_dispatch`）
 - 使用 Python `3.11`
 - 安装依赖：`requests`
-- 先运行 `bot.py` 生成 `echart_option.json`
-- 再运行 `upload_to_wiki.py`，按 MediaWiki 标准流程上传：
+- 先运行 `generate_chart_json.py` 生成 `echart_option.json`
+- 再运行 `publish_chart_json.py`，按 MediaWiki 标准流程上传：
   1. 获取 login token
   2. 登录
   3. 查询当前登录用户组（`meta=userinfo&uiprop=groups`）
@@ -162,13 +163,13 @@
 ## 受限站点说明
 
 - 部分站点会限制匿名 API 读取（会返回 `action-notallowed` / `Unauthorized API call`）
-- `bot.py` 支持在拉取贡献前自动登录：
+- `generate_chart_json.py` 支持在拉取贡献前自动登录：
   - 读取 `BOT_USERNAME` 与 `BOT_PASSWORD`（Secrets）
   - 成功登录后再执行 `usercontribs` 查询
 
 ## 本地运行（.env）
 
-- `bot.py` 会自动读取项目根目录下的 `.env`
+- `generate_chart_json.py` 和 `publish_chart_json.py` 会自动读取项目根目录下的 `.env`
 - 可先复制 `.env.example` 为 `.env`，再填入你的真实值
 - `.env` 已在 `.gitignore` 中忽略，不会被提交
 - 切记不要包含敏感信息的 `.env` 提交到版本控制系统，尤其是公开仓库
@@ -177,12 +178,14 @@
 
 ```bash
 cp .env.example .env
-python bot.py
+python generate_chart_json.py
 # 如需在本地直接上传到 Wiki，再执行：
-python upload_to_wiki.py
+python publish_chart_json.py
 ```
 
-本地执行 `upload_to_wiki.py` 时，请确保 `.env` 或系统环境中已设置 `WIKI_API`、`WIKI_PAGE`、`BOT_USERNAME`、`BOT_PASSWORD`；可选设置 `EDIT_TAG_CANDIDATES`。
+本地执行 `publish_chart_json.py` 时，请确保 `.env` 或系统环境中已设置 `WIKI_API`、`WIKI_PAGE`、`BOT_USERNAME`、`BOT_PASSWORD`；可选设置 `EDIT_TAG_CANDIDATES`。
+
+说明：`generate_chart_json.py` 与 `publish_chart_json.py` 都支持读取 `WIKI_API` 或 `API_URL`；推荐统一使用 `WIKI_API`，这样本地只需配置一次 API 地址。
 
 ## 首次验证建议
 

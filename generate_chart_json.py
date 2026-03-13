@@ -9,36 +9,10 @@ from typing import Any
 
 import requests
 from chart_styles import build_option_for_style, parse_chart_style
-from requests import Response
+from mw_runtime import DEFAULT_USER_AGENT, build_session, load_env_file, safe_get_json
 from requests.exceptions import RequestException
 
-
-def _load_env_file(env_path: str = ".env") -> None:
-    path = Path(env_path)
-    if not path.exists() or not path.is_file():
-        return
-
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
-            continue
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip()
-        if not key:
-            continue
-
-        if ((value.startswith('"') and value.endswith('"'))
-                or (value.startswith("'") and value.endswith("'"))):
-            value = value[1:-1]
-
-        os.environ.setdefault(key, value)
-
-
-_load_env_file()
+load_env_file()
 
 
 def _parse_excluded_namespaces(raw_value: str) -> set[int] | None:
@@ -113,7 +87,9 @@ def _extract_first_user(user_str: str) -> str:
 
 
 # ===== 可配置参数 =====
-API_URL: str = os.environ.get("API_URL", "").strip()  # 必填：目标站点 API
+# 兼容两种变量名：优先 API_URL，其次 WIKI_API（便于与上传脚本统一配置）
+API_URL: str = (os.environ.get("API_URL", "").strip()
+                or os.environ.get("WIKI_API", "").strip())  # 必填：目标站点 API
 USER: str = os.environ.get("WIKI_USER", "").strip()  # 必填：统计目标用户名
 DISPLAY_NAME: str = os.environ.get("DISPLAY_NAME",
                                    "").strip() or _extract_first_user(
@@ -134,8 +110,7 @@ REQUEST_TIMEOUT_SECONDS: int = 30
 # User-Agent 符合 MediaWiki API 礼仪要求
 USER_AGENT: str = os.environ.get(
     "USER_AGENT",
-    "WikiChartBot/1.0 (https://github.com/your-org/your-repo; "
-    "contact@example.org) requests/2.x",
+    DEFAULT_USER_AGENT,
 ).strip()
 MAX_LAG: int = 5  # 最大数据库延迟（秒），用于非交互式任务
 BOT_LOGIN_USERNAME: str = os.environ.get("BOT_USERNAME", "").strip()
@@ -147,30 +122,12 @@ USERCONTRIBS_FALLBACK_LIMIT: str = "499"
 def _validate_required_config() -> None:
     missing: list[str] = []
     if not API_URL:
-        missing.append("API_URL")
+        missing.append("API_URL/WIKI_API")
     if not USER:
         missing.append("WIKI_USER")
     if missing:
         raise RuntimeError("缺少必要环境变量: " + ", ".join(missing) +
                            "。请创建 .env（可从 .env.example 复制）或在系统环境中设置。")
-
-
-def _safe_get_json(response: Response) -> dict[str, Any]:
-    """安全解析 JSON，并在失败时抛出包含上下文的异常。"""
-    try:
-        return response.json()
-    except ValueError as exc:
-        raise RuntimeError(
-            f"API 返回了非 JSON 响应，HTTP {response.status_code}") from exc
-
-
-def _build_session() -> requests.Session:
-    session = requests.Session()
-    session.headers.update({
-        "User-Agent": USER_AGENT,
-        "Accept-Encoding": "gzip",
-    })
-    return session
 
 
 def _login_if_configured(session: requests.Session, api_url: str) -> None:
@@ -190,7 +147,7 @@ def _login_if_configured(session: requests.Session, api_url: str) -> None:
             timeout=REQUEST_TIMEOUT_SECONDS,
         )
         token_response.raise_for_status()
-        token_data = _safe_get_json(token_response)
+        token_data = safe_get_json(token_response)
     except RequestException as exc:
         raise RuntimeError(f"获取登录 token 失败: {exc}") from exc
 
@@ -213,7 +170,7 @@ def _login_if_configured(session: requests.Session, api_url: str) -> None:
             timeout=REQUEST_TIMEOUT_SECONDS,
         )
         login_response.raise_for_status()
-        login_data = _safe_get_json(login_response)
+        login_data = safe_get_json(login_response)
     except RequestException as exc:
         raise RuntimeError(f"登录请求失败: {exc}") from exc
 
@@ -224,7 +181,7 @@ def _login_if_configured(session: requests.Session, api_url: str) -> None:
 
 def fetch_all_contribs(api_url: str, user: str) -> list[dict[str, Any]]:
     """调用 MediaWiki API 拉取指定用户的全部 usercontribs（含 continue 分页）。"""
-    session = _build_session()
+    session = build_session(USER_AGENT)
     _login_if_configured(session, api_url)
     all_contribs: list[dict[str, Any]] = []
 
@@ -253,7 +210,7 @@ def fetch_all_contribs(api_url: str, user: str) -> list[dict[str, Any]]:
         except RequestException as exc:
             raise RuntimeError(f"请求 MediaWiki API 失败: {exc}") from exc
 
-        data = _safe_get_json(response)
+        data = safe_get_json(response)
 
         if "error" in data:
             api_error = data["error"]

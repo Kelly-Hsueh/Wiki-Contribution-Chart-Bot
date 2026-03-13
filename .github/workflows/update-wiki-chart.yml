@@ -11,7 +11,6 @@ jobs:
     permissions:
       contents: read
     env:
-            API_URL: "${{ vars.WIKI_API }}"
             WIKI_USER: "${{ secrets.WIKI_USER || vars.WIKI_USER }}"
             DISPLAY_NAME: "${{ secrets.DISPLAY_NAME || vars.DISPLAY_NAME }}"
             EXCLUDED_NAMESPACES: "${{ vars.EXCLUDED_NAMESPACES }}"
@@ -37,8 +36,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Run bot.py
-        run: python bot.py
+      - name: Run generate_chart_json.py
+        run: python generate_chart_json.py
 
       - name: Upload echart_option.json to wiki
-        run: python upload_to_wiki.py
+        run: python publish_chart_json.py

@@ -2,38 +2,12 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 from typing import Any
 
 import requests
+from mw_runtime import DEFAULT_USER_AGENT, build_session, load_env_file, safe_get_json
 
-
-def _load_env_file(env_path: str = ".env") -> None:
-    path = Path(env_path)
-    if not path.exists() or not path.is_file():
-        return
-
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
-            continue
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip()
-        if not key:
-            continue
-
-        if ((value.startswith('"') and value.endswith('"'))
-                or (value.startswith("'") and value.endswith("'"))):
-            value = value[1:-1]
-
-        os.environ.setdefault(key, value)
-
-
-_load_env_file()
+load_env_file()
 
 
 def fail(message: str, detail: Any = None) -> None:
@@ -137,7 +111,8 @@ def format_api_error(result: dict[str, Any]) -> str:
 
 
 def main() -> None:
-    wiki_api = os.environ.get("WIKI_API", "").strip()
+    wiki_api = (os.environ.get("WIKI_API", "").strip()
+                or os.environ.get("API_URL", "").strip())
     wiki_page = os.environ.get("WIKI_PAGE", "").strip()
     bot_username = os.environ.get("BOT_USERNAME", "").strip()
     bot_password = os.environ.get("BOT_PASSWORD", "").strip()
@@ -152,12 +127,11 @@ def main() -> None:
         )
     user_agent = os.environ.get(
         "USER_AGENT",
-        "WikiChartBot/1.0 (https://github.com/your-org/your-repo; "
-        "contact@example.org) requests/2.x",
+        DEFAULT_USER_AGENT,
     ).strip()
 
     if not wiki_api:
-        fail("Missing WIKI_API (set repository variable or env)")
+        fail("Missing WIKI_API/API_URL (set repository variable or env)")
     if not wiki_page:
         fail("Missing WIKI_PAGE (set repository variable or env)")
     if not bot_username:
@@ -167,7 +141,9 @@ def main() -> None:
 
     content_path = "echart_option.json"
     if not os.path.exists(content_path):
-        fail("echart_option.json not found; ensure bot.py generated it")
+        fail(
+            "echart_option.json not found; ensure generate_chart_json.py generated it"
+        )
 
     try:
         with open(content_path, "r", encoding="utf-8") as file:
@@ -175,11 +151,7 @@ def main() -> None:
     except Exception as exc:
         fail("Failed to read echart_option.json", str(exc))
 
-    session = requests.Session()
-    session.headers.update({
-        "User-Agent": user_agent,
-        "Accept-Encoding": "gzip",
-    })
+    session = build_session(user_agent)
     timeout = 30
     max_lag = 5
     assert_mode = "user"
@@ -197,7 +169,7 @@ def main() -> None:
             timeout=timeout,
         )
         r1.raise_for_status()
-        d1 = r1.json()
+        d1 = safe_get_json(r1)
     except Exception as exc:
         fail("Failed to fetch login token", str(exc))
 
@@ -219,7 +191,7 @@ def main() -> None:
             timeout=timeout,
         )
         r2.raise_for_status()
-        d2 = r2.json()
+        d2 = safe_get_json(r2)
     except Exception as exc:
         fail("Login request failed", str(exc))
 
@@ -241,7 +213,7 @@ def main() -> None:
             timeout=timeout,
         )
         r_user.raise_for_status()
-        d_user = r_user.json()
+        d_user = safe_get_json(r_user)
     except Exception as exc:
         fail("Failed to fetch user groups", str(exc))
 
@@ -268,7 +240,7 @@ def main() -> None:
             timeout=timeout,
         )
         r3.raise_for_status()
-        d3 = r3.json()
+        d3 = safe_get_json(r3)
     except Exception as exc:
         fail("Failed to fetch CSRF token", str(exc))
 
@@ -293,7 +265,7 @@ def main() -> None:
             timeout=timeout,
         )
         r4.raise_for_status()
-        d4 = r4.json()
+        d4 = safe_get_json(r4)
     except Exception as exc:
         fail("Failed to fetch current page content", str(exc))
 
