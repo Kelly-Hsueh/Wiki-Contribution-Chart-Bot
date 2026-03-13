@@ -133,6 +133,12 @@
 ## Workflow 行为
 
 - 每天 UTC `03:00` 自动运行
+> [!NOTE]
+> 可根据需要调整 cron 表达式；
+> 
+> 在公共仓库中，如果60天内没有任何仓库活动，则使用 `schedule` 事件定时的 workflow 将被自动禁用；
+> 
+> `schedule` 表达式语法及更多信息见：[GitHub文档：触发工作流的事件](https://docs.github.com/zh/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 - 支持手动触发（`workflow_dispatch`）
 - 使用 Python `3.11`
 - 安装依赖：`requests`
