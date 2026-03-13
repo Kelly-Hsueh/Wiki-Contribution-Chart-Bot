@@ -106,7 +106,14 @@ def format_api_error(result: dict[str, Any]) -> str:
 
     code = str(error.get("code", ""))
     info = str(error.get("info", ""))
-    return f"error.code={code!r}, error.info={info!r}, error={error}"
+    # Omit 'code', 'info' (already shown) and '*' (verbose API usage boilerplate)
+    skip_keys = {"code", "info", "*"}
+    extra = {k: v for k, v in error.items() if k not in skip_keys}
+
+    parts = [f"code={code!r}", f"info={info!r}"]
+    if extra:
+        parts.append(f"extra={extra!r}")
+    return ", ".join(parts)
 
 
 def format_bot_flag(mark_as_bot: bool) -> str:
@@ -283,9 +290,9 @@ def main() -> None:
         raise SystemExit(0)
 
     edit_tag_candidates = parse_edit_tag_candidates(edit_tag_candidates_raw)
-    print("Edit tag configuration: "
-          f"EDIT_TAG_CANDIDATES_raw={edit_tag_candidates_raw!r}, "
-          f"parsed_candidates={edit_tag_candidates!r}")
+    print(
+        f"Edit tag candidates: {edit_tag_candidates!r}  (raw: {edit_tag_candidates_raw!r})"
+    )
     if not edit_tag_candidates:
         warn("未解析到任何可用编辑标签；本次不会发送 tags 参数。"
              "请检查 EDIT_TAG_CANDIDATES 是否为空。")
