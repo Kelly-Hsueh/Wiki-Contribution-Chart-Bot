@@ -47,8 +47,9 @@
 
     可带`User:`前缀，但任何别名（如`U:`）都不支持；建议不加
     - 根据 MediaWiki API 文档[[Special:ApiHelp/query]]，支持 `用户名、​IP、​临时用户和​跨wiki用户名（例如“前缀>示例用户”）`（“跨wiki用户名”指跨维基导入的页面修订历史中被导入的用户名，并非允许[[Special:Interwiki]]的跨Wiki链接）
-  - 如需查询多用户：使用 `|` 或 `%7C`（管道符）分隔多个用户名，例如 `User1|User2|User3`
-    - 图表会自动合并多个用户的贡献数据，目前不支持拆分
+  - 支持查询多用户：使用 `|` 或 `%7C`（管道符）分隔多个用户名，例如 `User1|User2|User3`
+    - 在 `CHART_STYLE=namespace` 或 `sum` 模式下：合并所有用户的贡献数据
+    - 在 `CHART_STYLE=account` 模式下：按用户分别统计并按输入顺序在图表中堆叠展示
     - `DISPLAY_NAME` 会默认使用 `WIKI_USER` 中的第一个用户名作为显示名称
 - `DISPLAY_NAME`
   - 图表中显示的用户名/别名
@@ -109,9 +110,9 @@
   - 留空或不设置：自动排除 `ns=2`(用户) 与奇数命名空间（讨论页）
   - 设置 `false`/`null`/`none`：不排除任何命名空间
   - 逗号分隔整数：指定排除的命名空间，例如 `1,2,3,5,7,9`
-- `CHART_STYLE`：图表方案（`namespace` 或 `sum`，默认 `namespace`）
-- `NAMESPACE_MODE`：命名空间序列展示策略（`top` 或 `all`）
-- `TOP_NAMESPACE_LIMIT`：Top 命名空间数量（正整数，默认 `10`）
+- `CHART_STYLE`：图表方案（`namespace`、`sum` 或 `account`，默认 `namespace`）
+- `NAMESPACE_MODE`：命名空间序列展示策略（`top` 或 `all`，仅用于 `namespace` 模式）
+- `TOP_NAMESPACE_LIMIT`：Top 命名空间数量（正整数，默认 `10`，仅用于 `namespace` 模式）
 - `CHART_SERIES_TYPE`：图表初始系列类型（`bar` 或 `line`，默认 `bar`）
 - `USER_AGENT`：建议通过环境变量配置（**重要！**）
 - `DISPLAY_NAME`：未设置或为空时，自动从 `WIKI_USER` 提取第一个用户名作为默认值
@@ -131,6 +132,12 @@
   - 当命名空间较多时，默认启用 `Top N + Other`，降低 legend 拥挤风险
 - `CHART_STYLE=sum`
   - 输出按月总贡献图（单序列）
+  - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
+- `CHART_STYLE=account`
+  - 输出按月账户堆叠图（多用户模式）
+  - 在 `WIKI_USER` 中使用 `|` 或 `%7C` 分隔多个用户名，例如：`User1|User2|User3`
+  - 拉取所有指定用户的贡献并合并，按照 `WIKI_USER` 中的用户顺序在图表中排列
+  - 按照通用逻辑对贡献进行命名空间过滤（自动排除用户命名空间与讨论页，或按 `EXCLUDED_NAMESPACES` 配置）
   - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
 
 ## Workflow 行为

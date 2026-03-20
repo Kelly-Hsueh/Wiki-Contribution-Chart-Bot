@@ -95,6 +95,22 @@ def _extract_first_user(user_str: str) -> str:
     return user_str.split(delimiter)[0].strip() if delimiter else user_str
 
 
+def _parse_multiple_users(user_str: str) -> list[str]:
+    """从可能包含多个用户（以|或%7C分隔）的字符串中提取所有用户。
+
+    按照给定的顺序返回去除空格的用户名列表。
+    """
+    if not user_str:
+        return []
+
+    delimiter = next((item for item in ("|", "%7C") if item in user_str), None)
+    if not delimiter:
+        return [user_str.strip()]
+
+    users = [u.strip() for u in user_str.split(delimiter)]
+    return [u for u in users if u]  # 过滤掉空字符串
+
+
 # ===== 可配置参数 =====
 WIKI_API: str = os.environ.get("WIKI_API", "").strip()  # 必填：目标站点 API
 USER: str = os.environ.get("WIKI_USER", "").strip()  # 必填：统计目标用户名
@@ -267,6 +283,43 @@ def _build_generated_time() -> str:
             f"{now_utc.hour:02d}:{now_utc.minute:02d}〔UTC〕")
 
 
+def _group_contribs_by_user(
+    contribs: list[dict[str, Any]],
+    user_order: list[str],
+    excluded_namespaces: set[int],
+) -> dict[str, list[dict[str, Any]]]:
+    """根据贡献中的 'user' 字段将贡献分组，并应用命名空间过滤。
+
+    Args:
+        contribs: 从 API 获取的贡献列表
+        user_order: 用户的预期顺序
+        excluded_namespaces: 需要排除的命名空间集合
+
+    Returns:
+        键为用户名，值为该用户的已过滤 contribs 列表的字典（按 user_order 顺序）
+    """
+    # 先按用户名分组
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for contrib in contribs:
+        user = contrib.get("user")
+        if not isinstance(user, str):
+            continue
+        if user not in grouped:
+            grouped[user] = []
+        grouped[user].append(contrib)
+
+    # 应用命名空间过滤，并按 user_order 顺序构建结果
+    result: dict[str, list[dict[str, Any]]] = {}
+    for user in user_order:
+        if user in grouped:
+            filtered = filter_namespace(grouped[user], excluded_namespaces)
+            result[user] = filtered
+        else:
+            result[user] = []
+
+    return result
+
+
 def main() -> None:
     """主流程：抓取、过滤、聚合、生成并写出 JSON。"""
     try:
@@ -277,30 +330,70 @@ def main() -> None:
         _login_if_configured(session, WIKI_API)
         namespace_map = fetch_namespaces(session, WIKI_API, REQUEST_TIMEOUT_SECONDS)
 
-        all_contribs = fetch_all_contribs(WIKI_API, USER)
-        excluded_namespaces, is_auto_inferred = _resolve_excluded_namespaces(
-            all_contribs,
-            EXCLUDED_NAMESPACES,
-        )
-        filtered_contribs = filter_namespace(
-            all_contribs,
-            excluded_namespaces,
-        )
+        generated_time = _build_generated_time()
 
-        print(f"统计总编辑数（过滤后）: {len(filtered_contribs)}")
+        # account 模式：拉取多个用户的贡献（单个 API 请求）
+        if CHART_STYLE == "account":
+            users = _parse_multiple_users(USER)
+            if not users:
+                raise RuntimeError("WIKI_USER 为空或格式错误")
 
-        option = build_option_for_style(
-            chart_style=CHART_STYLE,
-            display_name=DISPLAY_NAME,
-            contribs=filtered_contribs,
-            generated_time=_build_generated_time(),
-            chart_series_type=CHART_SERIES_TYPE,
-            excluded_namespaces=excluded_namespaces,
-            namespace_mode=NAMESPACE_MODE,
-            top_namespace_limit=TOP_NAMESPACE_LIMIT,
-            namespace_map=namespace_map,
-            is_auto_inferred_namespaces=is_auto_inferred,
-        )
+            # 调用单个 API 查询，传入用管道符分隔的用户列表
+            all_contribs = fetch_all_contribs(WIKI_API, USER)
+
+            # 推断排除的命名空间
+            excluded_namespaces, is_auto_inferred = _resolve_excluded_namespaces(
+                all_contribs,
+                EXCLUDED_NAMESPACES,
+            )
+
+            # 按用户分组贡献（已应用命名空间过滤）
+            accounts_contribs = _group_contribs_by_user(
+                all_contribs, users, excluded_namespaces
+            )
+            total_edits = sum(len(contribs) for contribs in accounts_contribs.values())
+            print(f"统计总编辑数（过滤后）: {total_edits}")
+
+            option = build_option_for_style(
+                chart_style=CHART_STYLE,
+                display_name=DISPLAY_NAME,
+                contribs=[],  # account 模式不使用此参数
+                generated_time=generated_time,
+                chart_series_type=CHART_SERIES_TYPE,
+                excluded_namespaces=excluded_namespaces,
+                namespace_mode="",  # account 模式不使用此参数
+                top_namespace_limit=0,  # account 模式不使用此参数
+                namespace_map=namespace_map,
+                accounts_contribs=accounts_contribs,
+                account_order=users,
+                is_auto_inferred_namespaces=is_auto_inferred,
+            )
+        else:
+            # namespace 或 sum 模式：拉取单个用户的贡献
+            all_contribs = fetch_all_contribs(WIKI_API, USER)
+            excluded_namespaces, is_auto_inferred = _resolve_excluded_namespaces(
+                all_contribs,
+                EXCLUDED_NAMESPACES,
+            )
+            filtered_contribs = filter_namespace(
+                all_contribs,
+                excluded_namespaces,
+            )
+
+            print(f"统计总编辑数（过滤后）: {len(filtered_contribs)}")
+
+            option = build_option_for_style(
+                chart_style=CHART_STYLE,
+                display_name=DISPLAY_NAME,
+                contribs=filtered_contribs,
+                generated_time=generated_time,
+                chart_series_type=CHART_SERIES_TYPE,
+                excluded_namespaces=excluded_namespaces,
+                namespace_mode=NAMESPACE_MODE,
+                top_namespace_limit=TOP_NAMESPACE_LIMIT,
+                namespace_map=namespace_map,
+                is_auto_inferred_namespaces=is_auto_inferred,
+            )
 
         output_path = Path(OUTPUT_FILE)
         output_path.write_text(
