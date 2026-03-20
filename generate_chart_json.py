@@ -21,13 +21,22 @@ load_env_file()
 
 
 def _parse_excluded_namespaces(raw_value: str) -> set[int] | None:
-    """将逗号分隔的命名空间字符串解析为整数集合。空值表示自动推断。"""
-    value = raw_value.strip()
+    """将逗号分隔的命名空间字符串解析为整数集合。
+
+    - 空值：返回 None，触发自动推断（排除 ns=2 和奇数命名空间）
+    - "false"/"null"/"none"：返回空 set()，表示不排除任何命名空间
+    - 其他值：按逗号分隔解析为整数集合
+    """
+    value = raw_value.strip().lower()
     if not value:
         return None
 
+    # 显式指定不排除任何命名空间
+    if value in {"false", "null", "none"}:
+        return set()
+
     namespace_ids: set[int] = set()
-    for part in value.split(","):
+    for part in raw_value.split(","):
         token = part.strip()
         if not token:
             continue
@@ -35,7 +44,7 @@ def _parse_excluded_namespaces(raw_value: str) -> set[int] | None:
             namespace_ids.add(int(token))
         except ValueError as exc:
             raise RuntimeError("环境变量 EXCLUDED_NAMESPACES 格式错误："
-                               f"{raw_value}。请使用逗号分隔的整数，例如 1,2,3,5") from exc
+                               f"{raw_value}。请使用逗号分隔的整数或 false/null/none，例如 1,2,3,5") from exc
 
     return namespace_ids
 
@@ -225,10 +234,15 @@ def _auto_excluded_namespaces_from_contribs(
 def _resolve_excluded_namespaces(
     contribs: list[dict[str, Any]],
     configured_excluded_namespaces: set[int] | None,
-) -> set[int]:
+) -> tuple[set[int], bool]:
+    """返回排除的命名空间集合和是否为自动推断的标记。
+
+    Returns:
+        (excluded_namespaces, is_auto_inferred)
+    """
     if configured_excluded_namespaces is not None:
-        return configured_excluded_namespaces
-    return _auto_excluded_namespaces_from_contribs(contribs)
+        return configured_excluded_namespaces, False
+    return _auto_excluded_namespaces_from_contribs(contribs), True
 
 
 def filter_namespace(contribs: list[dict[str, Any]],
@@ -257,13 +271,13 @@ def main() -> None:
     try:
         _validate_required_config()
         all_contribs = fetch_all_contribs(WIKI_API, USER)
-        resolved_excluded_namespaces = _resolve_excluded_namespaces(
+        excluded_namespaces, is_auto_inferred = _resolve_excluded_namespaces(
             all_contribs,
             EXCLUDED_NAMESPACES,
         )
         filtered_contribs = filter_namespace(
             all_contribs,
-            resolved_excluded_namespaces,
+            excluded_namespaces,
         )
 
         print(f"统计总编辑数（过滤后）: {len(filtered_contribs)}")
@@ -274,9 +288,10 @@ def main() -> None:
             contribs=filtered_contribs,
             generated_time=_build_generated_time(),
             chart_series_type=CHART_SERIES_TYPE,
-            excluded_namespaces=resolved_excluded_namespaces,
+            excluded_namespaces=excluded_namespaces,
             namespace_mode=NAMESPACE_MODE,
             top_namespace_limit=TOP_NAMESPACE_LIMIT,
+            is_auto_inferred_namespaces=is_auto_inferred,
         )
 
         output_path = Path(OUTPUT_FILE)

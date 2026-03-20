@@ -4,7 +4,7 @@ from collections import Counter
 from datetime import datetime
 from typing import Any
 
-from chart_styles import build_namespace_name, build_excluded_namespaces_text
+from chart_styles.utils import build_namespace_name, build_excluded_namespaces_text
 
 
 def _group_by_month_and_namespace(
@@ -96,6 +96,7 @@ def build_option(
     excluded_namespaces: set[int],
     namespace_mode: str,
     top_namespace_limit: int,
+    is_auto_inferred_namespaces: bool = False,
 ) -> dict[str, Any]:
     full_months, namespace_month_counts, namespace_totals = _group_by_month_and_namespace(
         contribs)
@@ -152,9 +153,11 @@ def build_option(
             **_build_series_style(),
         })
 
-    subtext = ("按月按命名空间统计\n"
-               f"{build_excluded_namespaces_text(excluded_namespaces)}\n"
-               f"（截至 {generated_time}）")
+    subtext = (
+        "按月按命名空间统计\n"
+        f"{build_excluded_namespaces_text(excluded_namespaces, is_auto_inferred_namespaces)}\n"
+        f"（截至 {generated_time}）"
+    )
 
     return {
         "__WARNING__":

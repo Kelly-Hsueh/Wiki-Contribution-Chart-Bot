@@ -4,25 +4,7 @@ from typing import Any, Literal
 
 from chart_styles.sum_style import build_option as build_sum_option
 from chart_styles.namespace_style import build_option as build_namespace_option
-
-
-def build_namespace_name(ns_id: int) -> str:
-    return "（主）" if ns_id == 0 else f"{{{{ns:{ns_id}}}}}"
-
-
-def build_excluded_namespaces_text(excluded_namespaces: set[int]) -> str:
-    if not excluded_namespaces:
-        return "未排除命名空间"
-
-    sorted_ids = sorted(excluded_namespaces)
-    preview_count = 3
-    preview_labels = [
-        build_namespace_name(ns_id) for ns_id in sorted_ids[:preview_count]
-    ]
-    if len(sorted_ids) <= preview_count:
-        return "已排除：" + "、".join(preview_labels)
-
-    return ("已排除：" + "、".join(preview_labels) + f" 等{len(sorted_ids)}个命名空间")
+from chart_styles.utils import build_namespace_name, build_excluded_namespaces_text
 
 ChartStyle = Literal["namespace", "sum"]
 
@@ -49,6 +31,7 @@ def build_option_for_style(
     excluded_namespaces: set[int],
     namespace_mode: str,
     top_namespace_limit: int,
+    is_auto_inferred_namespaces: bool = False,
 ) -> dict[str, Any]:
     if chart_style == "sum":
         return build_sum_option(
@@ -59,6 +42,7 @@ def build_option_for_style(
             excluded_namespaces=excluded_namespaces,
             namespace_mode=namespace_mode,
             top_namespace_limit=top_namespace_limit,
+            is_auto_inferred_namespaces=is_auto_inferred_namespaces,
         )
 
     return build_namespace_option(
@@ -69,4 +53,5 @@ def build_option_for_style(
         excluded_namespaces=excluded_namespaces,
         namespace_mode=namespace_mode,
         top_namespace_limit=top_namespace_limit,
+        is_auto_inferred_namespaces=is_auto_inferred_namespaces,
     )

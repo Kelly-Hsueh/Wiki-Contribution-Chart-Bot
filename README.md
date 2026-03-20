@@ -73,9 +73,10 @@
   - 例如：`https://meta.wikimedia.org/w/api.php`
   - 用于抓取 usercontribs 和上传内容
 - `EXCLUDED_NAMESPACES`
-  - 可选，逗号分隔整数，例如：`1,2,3,5,7,9`
-  - 用于排除不统计的命名空间
-  - 不设置时会根据返回贡献自动排除：`ns=2`(用户) 与所有奇数命名空间（讨论页）
+  - 可选，支持三种模式：
+    - **不设置或空值**：自动排除 `ns=2`(用户) 与所有奇数命名空间（讨论页）
+    - **显式不排除**：设置为 `false`/`null`/`none`（任一即可），将不排除任何命名空间
+    - **指定排除**：逗号分隔整数，例如 `1,2,3,5,7,9`
 - `NAMESPACE_MODE`
   - 可选，`top` 或 `all`
   - 默认 `top`：仅展示 Top N 命名空间，其余合并为 `其他命名空间`
@@ -104,7 +105,10 @@
 
 推荐通过环境变量配置，无需修改 `generate_chart_json.py` 源码：
 
-- `EXCLUDED_NAMESPACES`：排除命名空间（逗号分隔整数；留空时自动排除 `ns=2`(用户) 与奇数命名空间（讨论页））
+- `EXCLUDED_NAMESPACES`：排除命名空间
+  - 留空或不设置：自动排除 `ns=2`(用户) 与奇数命名空间（讨论页）
+  - 设置 `false`/`null`/`none`：不排除任何命名空间
+  - 逗号分隔整数：指定排除的命名空间，例如 `1,2,3,5,7,9`
 - `CHART_STYLE`：图表方案（`namespace` 或 `sum`，默认 `namespace`）
 - `NAMESPACE_MODE`：命名空间序列展示策略（`top` 或 `all`）
 - `TOP_NAMESPACE_LIMIT`：Top 命名空间数量（正整数，默认 `10`）
