@@ -88,9 +88,9 @@
   - 默认 `namespace_stacked`：按命名空间堆叠
   - `monthly_total`：按月总贡献（单序列）
 - `CHART_SERIES_TYPE`
-  - 可选，`bar` 或 `line`
-  - 默认 `bar`：直方图
-  - `line`：折线图（堆叠样式下会带面积填充）
+  - 可选，`bar` （直方图）或 `line`（折线图）
+  - 仅控制图表初始展示类型（默认 `bar`）
+  - 图表内通过 `magicType` 在 `line/bar` 切换时会沿用统一样式配置
 - `EDIT_TAG_CANDIDATES`
   - 可选，逗号分隔标签候选列表，按顺序尝试，例如：`bot, Bot`
   - 默认值：`bot, Bot`
@@ -108,7 +108,7 @@
 - `CHART_STYLE`：图表方案（`namespace_stacked` 或 `monthly_total`，默认 `namespace_stacked`）
 - `NAMESPACE_MODE`：命名空间序列展示策略（`top` 或 `all`）
 - `TOP_NAMESPACE_LIMIT`：Top 命名空间数量（正整数，默认 `10`）
-- `CHART_SERIES_TYPE`：图表系列类型（`bar` 或 `line`，默认 `bar`）
+- `CHART_SERIES_TYPE`：图表初始系列类型（`bar` 或 `line`，默认 `bar`）
 - `USER_AGENT`：建议通过环境变量配置（**重要！**）
 - `DISPLAY_NAME`：未设置或为空时，自动从 `WIKI_USER` 提取第一个用户名作为默认值
   - 若 `WIKI_USER` 包含多个用户（以 `|` 或 `%7C` 分隔），只使用第一个用户作为 `DISPLAY_NAME`
@@ -121,11 +121,13 @@
 ## 图表行为
 
 - `CHART_STYLE=namespace_stacked`（默认）
-  - 输出按月命名空间堆叠图（默认 `bar`，可切 `line`）
+  - 输出按月命名空间堆叠图
+  - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
   - 每个系列默认使用 `{{ns:命名空间数字}}` 作为名称，便于 wiki 侧解析本地化命名空间名
   - 当命名空间较多时，默认启用 `Top N + Other`，降低 legend 拥挤风险
 - `CHART_STYLE=monthly_total`
-  - 输出按月总贡献图（单序列，默认 `bar`，可切 `line`）
+  - 输出按月总贡献图（单序列）
+  - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
 
 ## Workflow 行为
 

@@ -42,32 +42,19 @@ def _group_by_month(
     return x_labels, y_values
 
 
-def _build_series_style(chart_series_type: str) -> dict[str, Any]:
-    if chart_series_type == "line":
-        return {
-            "showSymbol": False,
-            "label": {
-                "formatter": "{c}",
-                "distance": 0,
-                "backgroundColor": "transparent",
-                "padding": 1,
-            },
-            "markPoint": {
-                "data": [{
-                    "type": "max",
-                    "name": "最大值",
-                }]
-            },
-            "markLine": {
-                "data": [{
-                    "type": "average",
-                    "name": "平均值",
-                }]
-            },
-        }
-
+def _build_series_style() -> dict[str, Any]:
     return {
+        "showSymbol": False,
         "barMaxWidth": 36,
+        "lineStyle": {
+            "width": 2,
+        },
+        "markPoint": {
+            "data": [{
+                "type": "max",
+                "name": "最大值",
+            }]
+        },
         "markLine": {
             "data": [{
                 "type": "average",
@@ -126,7 +113,25 @@ def build_option(
                     "yAxisIndex": "none"
                 },
                 "magicType": {
-                    "type": ["line", "bar"]
+                    "type": ["line", "bar"],
+                    "option": {
+                        "line": {
+                            "xAxis": {
+                                "boundaryGap": False
+                            },
+                            "series": [{
+                                "showSymbol": False,
+                            }]
+                        },
+                        "bar": {
+                            "xAxis": {
+                                "boundaryGap": True
+                            },
+                            "series": [{
+                                "barMaxWidth": 36,
+                            }]
+                        }
+                    }
                 },
                 "restore": {},
                 "saveAsImage": {
@@ -158,7 +163,7 @@ def build_option(
             "name": "月编辑数",
             "type": chart_series_type,
             "data": y_values,
-            **_build_series_style(chart_series_type),
+            **_build_series_style(),
         }],
         "animation":
         False

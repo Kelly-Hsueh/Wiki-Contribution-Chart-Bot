@@ -71,7 +71,8 @@ def _parse_chart_series_type(raw_value: str) -> str:
         return "bar"
     if value not in {"bar", "line"}:
         raise RuntimeError(
-            "环境变量 CHART_SERIES_TYPE 仅支持 bar 或 line，例如 CHART_SERIES_TYPE=bar")
+            "环境变量 CHART_SERIES_TYPE 仅支持 bar 或 line（仅控制初始展示类型），"
+            "例如 CHART_SERIES_TYPE=bar")
     return value
 
 
@@ -97,7 +98,7 @@ NAMESPACE_MODE: str = _parse_namespace_mode(
 TOP_NAMESPACE_LIMIT: int = _parse_top_namespace_limit(
     os.environ.get("TOP_NAMESPACE_LIMIT", "10"))
 CHART_SERIES_TYPE: str = _parse_chart_series_type(
-    os.environ.get("CHART_SERIES_TYPE", "bar"))
+    os.environ.get("CHART_SERIES_TYPE", "bar"))  # 仅控制初始 series.type
 CHART_STYLE = parse_chart_style(
     os.environ.get("CHART_STYLE", "namespace_stacked"))
 OUTPUT_FILE: str = "echart_option.json"

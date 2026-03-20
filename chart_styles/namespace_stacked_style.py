@@ -93,17 +93,15 @@ def _build_excluded_namespaces_text(excluded_namespaces: set[int]) -> str:
     return ("已排除：" + "、".join(preview_labels) + f" 等{len(sorted_ids)}个命名空间")
 
 
-def _build_series_style(chart_series_type: str, ) -> dict[str, Any]:
-    if chart_series_type == "line":
-        return {
-            "showSymbol": False,
-            "lineStyle": {
-                "width": 1.8,
-            },
-            "areaStyle": {},
-        }
-
+def _build_series_style() -> dict[str, Any]:
     return {
+        "showSymbol": False,
+        "lineStyle": {
+            "width": 1.8,
+        },
+        "areaStyle": {
+            "opacity": 0.16,
+        },
         "barMaxWidth": 28,
     }
 
@@ -144,7 +142,7 @@ def build_option(
             },
             "data":
             namespace_month_counts.get(ns_id, [0] * len(x_labels)),
-            **_build_series_style(chart_series_type=chart_series_type, ),
+            **_build_series_style(),
         })
 
     if merged_namespace_ids:
@@ -169,7 +167,7 @@ def build_option(
             },
             "data":
             other_data,
-            **_build_series_style(chart_series_type=chart_series_type, ),
+            **_build_series_style(),
         })
 
     subtext = ("按月按命名空间统计\n"
@@ -210,7 +208,28 @@ def build_option(
                     "yAxisIndex": "none"
                 },
                 "magicType": {
-                    "type": ["line", "bar"]
+                    "type": ["line", "bar"],
+                    "option": {
+                        "line": {
+                            "xAxis": {
+                                "boundaryGap": False
+                            },
+                            "series": [{
+                                "showSymbol": False,
+                                "areaStyle": {
+                                    "opacity": 0.16,
+                                }
+                            }]
+                        },
+                        "bar": {
+                            "xAxis": {
+                                "boundaryGap": True
+                            },
+                            "series": [{
+                                "barMaxWidth": 28,
+                            }]
+                        }
+                    }
                 },
                 "restore": {},
                 "saveAsImage": {
