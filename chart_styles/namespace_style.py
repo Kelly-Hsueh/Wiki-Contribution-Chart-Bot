@@ -4,6 +4,8 @@ from collections import Counter
 from datetime import datetime
 from typing import Any
 
+from chart_styles import build_namespace_name, build_excluded_namespaces_text
+
 
 def _group_by_month_and_namespace(
     contribs: list[dict[str, Any]],
@@ -55,10 +57,6 @@ def _group_by_month_and_namespace(
     return full_months, namespace_month_counts, dict(namespace_totals)
 
 
-def _build_namespace_name(ns_id: int) -> str:
-    return "（主）" if ns_id == 0 else f"{{{{ns:{ns_id}}}}}"
-
-
 def _select_series_namespaces(
     namespace_totals: dict[int, int],
     namespace_mode: str,
@@ -75,21 +73,6 @@ def _select_series_namespaces(
     kept = ordered_namespaces[:top_namespace_limit]
     merged = set(ordered_namespaces[top_namespace_limit:])
     return kept, merged
-
-
-def _build_excluded_namespaces_text(excluded_namespaces: set[int]) -> str:
-    if not excluded_namespaces:
-        return "未排除命名空间"
-
-    sorted_ids = sorted(excluded_namespaces)
-    preview_count = 3
-    preview_labels = [
-        _build_namespace_name(ns_id) for ns_id in sorted_ids[:preview_count]
-    ]
-    if len(sorted_ids) <= preview_count:
-        return "已排除：" + "、".join(preview_labels)
-
-    return ("已排除：" + "、".join(preview_labels) + f" 等{len(sorted_ids)}个命名空间")
 
 
 def _build_series_style() -> dict[str, Any]:
@@ -127,7 +110,7 @@ def build_option(
     legend_data: list[str] = []
     series: list[dict[str, Any]] = []
     for ns_id in selected_namespace_ids:
-        ns_name = _build_namespace_name(ns_id)
+        ns_name = build_namespace_name(ns_id)
         legend_data.append(ns_name)
         series.append({
             "name":
@@ -170,7 +153,7 @@ def build_option(
         })
 
     subtext = ("按月按命名空间统计\n"
-               f"{_build_excluded_namespaces_text(excluded_namespaces)}\n"
+               f"{build_excluded_namespaces_text(excluded_namespaces)}\n"
                f"（截至 {generated_time}）")
 
     return {

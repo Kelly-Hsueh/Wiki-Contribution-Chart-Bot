@@ -4,6 +4,8 @@ from collections import Counter
 from datetime import datetime
 from typing import Any
 
+from chart_styles import build_excluded_namespaces_text
+
 
 def _group_by_month(
         contribs: list[dict[str, Any]]) -> tuple[list[str], list[int]]:
@@ -76,10 +78,8 @@ def build_option(
     del namespace_mode, top_namespace_limit
 
     x_labels, y_values = _group_by_month(contribs)
-    if excluded_namespaces:
-        subtext_prefix = "按月总编辑数（已排除{{ns:2}}、各{{ns:1}}命名空间）"
-    else:
-        subtext_prefix = "按月总编辑数"
+    excluded_text = build_excluded_namespaces_text(excluded_namespaces)
+    subtext_prefix = f"按月总编辑数（{excluded_text}）"
 
     return {
         "__WARNING__":
