@@ -9,6 +9,7 @@ from typing import Any
 
 import requests
 from chart_styles import build_option_for_style, parse_chart_style
+from chart_styles.namespace_fetcher import fetch_namespaces
 from mw_runtime import (
     DEFAULT_USER_AGENT,
     api_get_json,
@@ -270,6 +271,12 @@ def main() -> None:
     """主流程：抓取、过滤、聚合、生成并写出 JSON。"""
     try:
         _validate_required_config()
+
+        # 获取命名空间映射
+        session = build_session(USER_AGENT)
+        _login_if_configured(session, WIKI_API)
+        namespace_map = fetch_namespaces(session, WIKI_API, REQUEST_TIMEOUT_SECONDS)
+
         all_contribs = fetch_all_contribs(WIKI_API, USER)
         excluded_namespaces, is_auto_inferred = _resolve_excluded_namespaces(
             all_contribs,
@@ -291,6 +298,7 @@ def main() -> None:
             excluded_namespaces=excluded_namespaces,
             namespace_mode=NAMESPACE_MODE,
             top_namespace_limit=TOP_NAMESPACE_LIMIT,
+            namespace_map=namespace_map,
             is_auto_inferred_namespaces=is_auto_inferred,
         )
 

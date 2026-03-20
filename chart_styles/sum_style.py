@@ -74,13 +74,14 @@ def build_option(
     excluded_namespaces: set[int],
     namespace_mode: str,
     top_namespace_limit: int,
+    namespace_map: dict[int, str] | None = None,
     is_auto_inferred_namespaces: bool = False,
 ) -> dict[str, Any]:
     del namespace_mode, top_namespace_limit
 
     x_labels, y_values = _group_by_month(contribs)
     excluded_text = build_excluded_namespaces_text(
-        excluded_namespaces, is_auto_inferred_namespaces
+        excluded_namespaces, namespace_map, is_auto_inferred_namespaces
     )
     subtext_prefix = f"按月总编辑数（{excluded_text}）"
 

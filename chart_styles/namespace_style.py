@@ -96,6 +96,7 @@ def build_option(
     excluded_namespaces: set[int],
     namespace_mode: str,
     top_namespace_limit: int,
+    namespace_map: dict[int, str] | None = None,
     is_auto_inferred_namespaces: bool = False,
 ) -> dict[str, Any]:
     full_months, namespace_month_counts, namespace_totals = _group_by_month_and_namespace(
@@ -111,7 +112,7 @@ def build_option(
     legend_data: list[str] = []
     series: list[dict[str, Any]] = []
     for ns_id in selected_namespace_ids:
-        ns_name = build_namespace_name(ns_id)
+        ns_name = build_namespace_name(ns_id, namespace_map)
         legend_data.append(ns_name)
         series.append({
             "name":
@@ -153,9 +154,12 @@ def build_option(
             **_build_series_style(),
         })
 
+    excluded_ns_text = build_excluded_namespaces_text(
+        excluded_namespaces, namespace_map, is_auto_inferred_namespaces
+    )
     subtext = (
         "按月按命名空间统计\n"
-        f"{build_excluded_namespaces_text(excluded_namespaces, is_auto_inferred_namespaces)}\n"
+        f"{excluded_ns_text}\n"
         f"（截至 {generated_time}）"
     )
 

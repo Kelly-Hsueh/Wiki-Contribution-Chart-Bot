@@ -127,7 +127,7 @@
 - `CHART_STYLE=namespace`（默认）
   - 输出按月命名空间堆叠图
   - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
-  - 每个系列默认使用 `{{ns:命名空间数字}}` 作为名称，便于 wiki 侧解析本地化命名空间名
+  - 每个系列的名称通过 MediaWiki API 获取实际的命名空间名称
   - 当命名空间较多时，默认启用 `Top N + Other`，降低 legend 拥挤风险
 - `CHART_STYLE=sum`
   - 输出按月总贡献图（单序列）

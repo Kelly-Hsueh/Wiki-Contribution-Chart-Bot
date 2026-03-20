@@ -4,7 +4,6 @@ from typing import Any, Literal
 
 from chart_styles.sum_style import build_option as build_sum_option
 from chart_styles.namespace_style import build_option as build_namespace_option
-from chart_styles.utils import build_namespace_name, build_excluded_namespaces_text
 
 ChartStyle = Literal["namespace", "sum"]
 
@@ -31,6 +30,7 @@ def build_option_for_style(
     excluded_namespaces: set[int],
     namespace_mode: str,
     top_namespace_limit: int,
+    namespace_map: dict[int, str] | None = None,
     is_auto_inferred_namespaces: bool = False,
 ) -> dict[str, Any]:
     if chart_style == "sum":
@@ -42,6 +42,7 @@ def build_option_for_style(
             excluded_namespaces=excluded_namespaces,
             namespace_mode=namespace_mode,
             top_namespace_limit=top_namespace_limit,
+            namespace_map=namespace_map,
             is_auto_inferred_namespaces=is_auto_inferred_namespaces,
         )
 
@@ -53,5 +54,6 @@ def build_option_for_style(
         excluded_namespaces=excluded_namespaces,
         namespace_mode=namespace_mode,
         top_namespace_limit=top_namespace_limit,
+        namespace_map=namespace_map,
         is_auto_inferred_namespaces=is_auto_inferred_namespaces,
     )
