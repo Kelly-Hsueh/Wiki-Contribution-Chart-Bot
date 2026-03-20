@@ -4,7 +4,7 @@ from collections import Counter
 from datetime import datetime
 from typing import Any
 
-from chart_styles.utils import build_excluded_namespaces_text
+from chart_sort_modes.utils import build_excluded_namespaces_text
 
 
 def _group_by_month_and_account(

@@ -2,28 +2,28 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from chart_styles.sum_style import build_option as build_sum_option
-from chart_styles.namespace_style import build_option as build_namespace_option
-from chart_styles.account_style import build_option as build_account_option
+from chart_sort_modes.sum_sort_mode import build_option as build_sum_option
+from chart_sort_modes.namespace_sort_mode import build_option as build_namespace_option
+from chart_sort_modes.account_sort_mode import build_option as build_account_option
 
-ChartStyle = Literal["namespace", "sum", "account"]
+ChartSortMode = Literal["namespace", "sum", "account"]
 
-_SUPPORTED_CHART_STYLES: set[str] = {"namespace", "sum", "account"}
+_SUPPORTED_CHART_SORT_MODES: set[str] = {"namespace", "sum", "account"}
 
 
-def parse_chart_style(raw_value: str) -> ChartStyle:
+def parse_chart_sort_mode(raw_value: str) -> ChartSortMode:
     value = raw_value.strip().lower()
     if not value:
         return "namespace"
-    if value not in _SUPPORTED_CHART_STYLES:
+    if value not in _SUPPORTED_CHART_SORT_MODES:
         raise RuntimeError(
-            "环境变量 CHART_STYLE 仅支持 namespace、sum 或 account，"
-            "例如 CHART_STYLE=namespace")
+            "环境变量 CHART_SORT_MODE 仅支持 namespace、sum 或 account，"
+            "例如 CHART_SORT_MODE=namespace")
     return value  # type: ignore[return-value]
 
 
-def build_option_for_style(
-    chart_style: ChartStyle,
+def build_option_for_sort_mode(
+    chart_sort_mode: ChartSortMode,
     display_name: str,
     contribs: list[dict[str, Any]],
     generated_time: str,
@@ -36,7 +36,7 @@ def build_option_for_style(
     accounts_contribs: dict[str, list[dict[str, Any]]] | None = None,
     account_order: list[str] | None = None,
 ) -> dict[str, Any]:
-    if chart_style == "account":
+    if chart_sort_mode == "account":
         if accounts_contribs is None or account_order is None:
             raise RuntimeError("account 模式需要提供 accounts_contribs 和 account_order 参数")
         return build_account_option(
@@ -50,7 +50,7 @@ def build_option_for_style(
             namespace_map=namespace_map,
         )
 
-    if chart_style == "sum":
+    if chart_sort_mode == "sum":
         return build_sum_option(
             display_name=display_name,
             contribs=contribs,

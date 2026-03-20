@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from chart_styles import build_option_for_style, parse_chart_style
-from chart_styles.namespace_fetcher import fetch_namespaces
+from chart_sort_modes import build_option_for_sort_mode, parse_chart_sort_mode
+from chart_sort_modes.namespace_fetcher import fetch_namespaces
 from mw_runtime import (
     DEFAULT_USER_AGENT,
     api_get_json,
@@ -125,8 +125,8 @@ TOP_NAMESPACE_LIMIT: int = _parse_top_namespace_limit(
     os.environ.get("TOP_NAMESPACE_LIMIT", "10"))
 CHART_SERIES_TYPE: str = _parse_chart_series_type(
     os.environ.get("CHART_SERIES_TYPE", "bar"))  # 仅控制初始 series.type
-CHART_STYLE = parse_chart_style(
-    os.environ.get("CHART_STYLE", "namespace"))
+CHART_SORT_MODE = parse_chart_sort_mode(
+    os.environ.get("CHART_SORT_MODE", "namespace"))
 OUTPUT_FILE: str = "echart_option.json"
 REQUEST_TIMEOUT_SECONDS: int = 30
 
@@ -333,7 +333,7 @@ def main() -> None:
         generated_time = _build_generated_time()
 
         # account 模式：拉取多个用户的贡献（单个 API 请求）
-        if CHART_STYLE == "account":
+        if CHART_SORT_MODE == "account":
             users = _parse_multiple_users(USER)
             if not users:
                 raise RuntimeError("WIKI_USER 为空或格式错误")
@@ -354,8 +354,8 @@ def main() -> None:
             total_edits = sum(len(contribs) for contribs in accounts_contribs.values())
             print(f"统计总编辑数（过滤后）: {total_edits}")
 
-            option = build_option_for_style(
-                chart_style=CHART_STYLE,
+            option = build_option_for_sort_mode(
+                chart_sort_mode=CHART_SORT_MODE,
                 display_name=DISPLAY_NAME,
                 contribs=[],  # account 模式不使用此参数
                 generated_time=generated_time,
@@ -382,8 +382,8 @@ def main() -> None:
 
             print(f"统计总编辑数（过滤后）: {len(filtered_contribs)}")
 
-            option = build_option_for_style(
-                chart_style=CHART_STYLE,
+            option = build_option_for_sort_mode(
+                chart_sort_mode=CHART_SORT_MODE,
                 display_name=DISPLAY_NAME,
                 contribs=filtered_contribs,
                 generated_time=generated_time,
