@@ -38,6 +38,9 @@
 
 ## GitHub 上的配置
 
+> [!NOTE]
+> 仓库可见性提示：在安全的情况下将仓库设为 Public 可减少（或避免）GitHub Actions Minutes 的消耗；具体以 GitHub 当前计费政策为准。
+
 在 GitHub 仓库中配置以下项目：
 
 ### 通用配置项
@@ -53,21 +56,19 @@ Workflow 兼容策略：同时支持 Secrets 和 Variables 的项均为 **Secret
 | `BOT_USERNAME` | ✅ |  | Bot 的登录名<br>BotPasswords 的机器人名称格式：`主账户@机器人名称`<br>此项目当前不支持 OAuth（原作者目标 wiki 站点未安装 OAuth 扩展） |
 | `BOT_PASSWORD` | ✅ |  | Bot 登录密码 |
 | `WIKI_API` |  | ✅ | 例如：`https://meta.wikimedia.org/w/api.php` |
-| `EXCLUDED_NAMESPACES` |  | ✅ | <details><summary>可选，支持三种模式</summary><ol><li>不设置或空值：自动排除 `ns=2`(用户) 与所有奇数命名空间（讨论页）</li><li>显式不排除：设置为 `false`/`null`/`none`（任一即可），将不排除任何命名空间</li><li>指定排除：逗号分隔整数，例如 `1,2,3,5,7,9`</li></ol></details> |
+| `EXCLUDED_NAMESPACES` |  | ✅ | <details><summary>支持三种模式</summary><ol><li>不设置或空值：自动排除 `ns=2`(用户) 与所有奇数命名空间（讨论页）</li><li>显式不排除：设置为 `false`/`null`/`none`（任一即可），将不排除任何命名空间</li><li>指定排除：逗号分隔整数，例如 `1,2,3,5,7,9`</li></ol></details> |
 | `NAMESPACE_MODE` |  | ✅ | 按命名空间归类时，对于大量命名空间的处理方法，`top` 或 `all`，默认 `top` |
 | `TOP_NAMESPACE_LIMIT` |  | ✅ | Top 展示的命名空间数量（正整数，默认 `10`） |
-| `CHART_SORT_MODE` |  | ✅ | <details><summary>可选，`namespace`、`sum` 或 `account`，默认 `namespace`</summary><ol><li>`namespace`：按命名空间堆叠<br></li><li>`sum`：按月总贡献（单序列）<br></li><li>`account`：按月账户堆叠（多用户模式）</li></ol></details> |
-| `CHART_SERIES_TYPE` |  | ✅ | 可选，`bar`（直方图）或 `line`（折线图）<br>仅控制图表初始展示类型，默认 `bar` |
-| `ACCOUNT_REG_MARKER_ENABLED` |  | ✅ | 是否启用注册时间标记（全模式可用）<br>可选，`true` 或 `false`，默认 `false` |
-| `ACCOUNT_REG_MARKER_OUT_OF_RANGE` |  | ✅ | 可选，`clamp_to_first` 或 `hide`<br>默认 `clamp_to_first`：注册时间早于统计区间时的处理策略 |
-| `EDIT_TAG_CANDIDATES` |  | ✅ | 可选，逗号分隔标签候选列表，按顺序尝试，默认值：`bot, Bot`<br>留空时不尝试任何标签，仅执行无标签编辑 |
+| `CHART_SORT_MODE` |  | ✅ | <details><summary>`namespace`、`sum` 或 `account`，默认 `namespace`</summary><ol><li>`namespace`：按命名空间堆叠<br></li><li>`sum`：按月总贡献（单序列）<br></li><li>`account`：按月账户堆叠（多用户模式）</li></ol></details> |
+| `CHART_SERIES_TYPE` |  | ✅ | `bar`（直方图）或 `line`（折线图）<br>仅控制图表初始展示类型，默认 `bar` |
+| `ACCOUNT_REG_MARKER_ENABLED` |  | ✅ | 是否启用注册时间标记（全模式可用）<br>`true` 或 `false`，默认 `false` |
+| `ACCOUNT_REG_MARKER_OUT_OF_RANGE` |  | ✅ | `clamp_to_first` 或 `hide`<br>默认 `clamp_to_first`：注册时间早于统计区间时的处理策略 |
+| `EDIT_TAG_CANDIDATES` |  | ✅ | 逗号分隔标签候选列表，按顺序尝试，默认值：`bot, Bot`<br>留空时不尝试任何标签，仅执行无标签编辑 |
 
-
-> [!NOTE]
-> 仓库可见性提示：将仓库设为 Public 通常可减少（或避免）GitHub Actions Minutes 的消耗；具体以 GitHub 当前计费政策为准。
+### 图表行为配置项
 
 <details>
-<summary><ins>图表行为配置项</ins>（Variables）</summary>
+<summary>均为可选的 Variables</summary>
   
 - `CHART_SORT_MODE=namespace`（默认）
   - 输出按月命名空间堆叠图
