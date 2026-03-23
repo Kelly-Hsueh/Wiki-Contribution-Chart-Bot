@@ -134,3 +134,87 @@ def build_registration_scatter_series(
             "position": "top",
         },
     }
+
+
+def build_axis_tooltip_config() -> dict[str, Any]:
+    """构建通用 axis tooltip 配置。"""
+    return {
+        "trigger": "axis",
+        "axisPointer": {
+            "type": "cross",
+            "animation": False,
+        },
+    }
+
+
+def build_magic_type_toolbox(
+    bar_max_width: int,
+    include_line_area_style: bool,
+) -> dict[str, Any]:
+    """构建通用 toolbox（magicType/restore/saveAsImage）。"""
+    line_series_item: dict[str, Any] = {
+        "showSymbol": False,
+    }
+    if include_line_area_style:
+        line_series_item["areaStyle"] = {
+            "opacity": 0.16,
+        }
+
+    return {
+        "show": True,
+        "feature": {
+            "magicType": {
+                "type": ["line", "bar"],
+                "option": {
+                    "line": {
+                        "xAxis": {
+                            "boundaryGap": False,
+                        },
+                        "series": [line_series_item],
+                    },
+                    "bar": {
+                        "xAxis": {
+                            "boundaryGap": True,
+                        },
+                        "series": [{
+                            "barMaxWidth": bar_max_width,
+                        }],
+                    },
+                },
+            },
+            "restore": {},
+            "saveAsImage": {
+                "excludeComponents": ["toolbox", "dataZoom"],
+            },
+        },
+    }
+
+
+def build_common_datazoom() -> list[dict[str, Any]]:
+    """构建通用 dataZoom 配置。"""
+    return [{
+        "type": "inside",
+        "xAxisIndex": [0],
+        "startValue": 0,
+        "end": 100,
+    }, {
+        "type": "slider",
+        "show": True,
+        "xAxisIndex": [0],
+    }]
+
+
+def build_category_x_axis(
+    x_labels: list[str],
+    chart_series_type: str,
+) -> dict[str, Any]:
+    """构建通用类目 X 轴配置。"""
+    x_axis: dict[str, Any] = {
+        "type": "category",
+        "boundaryGap": chart_series_type == "bar",
+        "axisLabel": {
+            "margin": 14,
+        },
+        "data": x_labels,
+    }
+    return x_axis

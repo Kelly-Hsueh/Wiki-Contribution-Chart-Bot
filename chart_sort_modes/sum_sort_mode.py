@@ -6,7 +6,11 @@ from typing import Any
 
 from chart_sort_modes import DEFAULT_ACCOUNT_REG_MARKER_OUT_OF_RANGE
 from chart_sort_modes.utils import (
+    build_axis_tooltip_config,
+    build_category_x_axis,
+    build_common_datazoom,
     build_excluded_namespaces_text,
+    build_magic_type_toolbox,
     build_registration_scatter_series,
 )
 
@@ -128,53 +132,12 @@ def build_option(
             "right": "10%",
             "containLabel": True
         },
-        "tooltip": {
-            "trigger": "axis",
-            "axisPointer": {
-                "type": "cross",
-                "animation": False
-            }
-        },
-        "toolbox": {
-            "show": True,
-            "feature": {
-                "magicType": {
-                    "type": ["line", "bar"],
-                    "option": {
-                        "line": {
-                            "xAxis": {
-                                "boundaryGap": False
-                            },
-                            "series": [{
-                                "showSymbol": False,
-                            }]
-                        },
-                        "bar": {
-                            "xAxis": {
-                                "boundaryGap": True
-                            },
-                            "series": [{
-                                "barMaxWidth": 36,
-                            }]
-                        }
-                    }
-                },
-                "restore": {},
-                "saveAsImage": {
-                    "excludeComponents": ["toolbox", "dataZoom"]
-                }
-            }
-        },
-        "dataZoom": [{
-            "type": "inside",
-            "xAxisIndex": [0],
-            "startValue": 0,
-            "end": 100
-        }, {
-            "type": "slider",
-            "show": True,
-            "xAxisIndex": [0]
-        }],
+        "tooltip": build_axis_tooltip_config(),
+        "toolbox": build_magic_type_toolbox(
+            bar_max_width=36,
+            include_line_area_style=False,
+        ),
+        "dataZoom": build_common_datazoom(),
         "legend": {
             "type": "scroll",
             "top": 80,
@@ -182,14 +145,10 @@ def build_option(
             "right": "10%",
             "data": legend_data,
         },
-        "xAxis": {
-            "axisLabel": {
-                "margin": 10
-            },
-            "type": "category",
-            "boundaryGap": chart_series_type == "bar",
-            "data": x_labels
-        },
+        "xAxis": build_category_x_axis(
+            x_labels=x_labels,
+            chart_series_type=chart_series_type,
+        ),
         "yAxis": {
             "type": "value"
         },
