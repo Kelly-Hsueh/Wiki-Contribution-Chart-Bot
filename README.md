@@ -183,7 +183,8 @@
 - `generate_chart_json.py` 和 `publish_chart_json.py` 会自动读取项目根目录下的 `.env`
 - 可先复制 `.env.example` 为 `.env`，再填入你的真实值
 - `.env` 已在 `.gitignore` 中忽略，不会被提交
-- 切记不要包含敏感信息的 `.env` 提交到版本控制系统，尤其是公开仓库
+> [!CAUTION]
+> 切记不要包含敏感信息的 `.env` 提交到版本控制系统，尤其是公开仓库
 
 示例：
 
