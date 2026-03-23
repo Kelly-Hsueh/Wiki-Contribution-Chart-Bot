@@ -79,11 +79,11 @@
     - **指定排除**：逗号分隔整数，例如 `1,2,3,5,7,9`
 - `NAMESPACE_MODE`
   - 可选，`top` 或 `all`
-  - 默认 `top`：仅展示 Top N 命名空间，其余合并为 `其他命名空间`
+  - 默认 `top`：仅展示编辑数前 N 的命名空间，其余合并为 `其他命名空间`
   - `all`：展示全部命名空间
 - `TOP_NAMESPACE_LIMIT`
   - 可选，正整数，默认 `10`
-  - 仅在 `NAMESPACE_MODE=top` 时生效
+  - 仅在 `NAMESPACE_MODE=top` 时生效，控制“编辑数前 N 的命名空间”的 N
 - `CHART_SORT_MODE`
   - 可选，`namespace`、`sum` 或 `account`
   - 默认 `namespace`：按命名空间堆叠
@@ -102,7 +102,7 @@
 - `EDIT_TAG_CANDIDATES`
   - 可选，逗号分隔标签候选列表，按顺序尝试，例如：`bot, Bot`
   - 默认值：`bot, Bot`
-  - 留空时不尝试任何 `tags`，仅执行无标签编辑
+  - 留空时不尝试任何标签，仅执行无标签编辑
 
 > Workflow 兼容策略：`WIKI_USER` / `DISPLAY_NAME` / `USER_AGENT` / `WIKI_PAGE` 均为 **Secrets 优先，并支持 Variables**，可按实际情况选择。
 
