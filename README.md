@@ -77,13 +77,6 @@
     - **不设置或空值**：自动排除 `ns=2`(用户) 与所有奇数命名空间（讨论页）
     - **显式不排除**：设置为 `false`/`null`/`none`（任一即可），将不排除任何命名空间
     - **指定排除**：逗号分隔整数，例如 `1,2,3,5,7,9`
-- `NAMESPACE_MODE`
-  - 可选，`top` 或 `all`
-  - 默认 `top`：仅展示编辑数前 N 的命名空间，其余合并为 `其他命名空间`
-  - `all`：展示全部命名空间
-- `TOP_NAMESPACE_LIMIT`
-  - 可选，正整数，默认 `10`
-  - 仅在 `NAMESPACE_MODE=top` 时生效，控制“编辑数前 N 的命名空间”的 N
 - `CHART_SORT_MODE`
   - 可选，`namespace`、`sum` 或 `account`
   - 默认 `namespace`：按命名空间堆叠
@@ -106,14 +99,19 @@
 
 > Workflow 兼容策略：`WIKI_USER` / `DISPLAY_NAME` / `USER_AGENT` / `WIKI_PAGE` 均为 **Secrets 优先，并支持 Variables**，可按实际情况选择。
 
+> [!NOTE]
 > 仓库可见性提示：将仓库设为 Public 通常可减少（或避免）GitHub Actions Minutes 的消耗；具体以 GitHub 当前计费政策为准。
 
-## 图表行为
-
+<details>
+<summary><ins>图表行为</ins></summary>
+  
 - `CHART_SORT_MODE=namespace`（默认）
   - 输出按月命名空间堆叠图
   - 每个系列的名称通过 MediaWiki API 获取实际的命名空间名称
   - 当命名空间较多时，默认启用 `NAMESPACE_MODE=top`，降低 legend 拥挤风险
+    -  `NAMESPACE_MODE`：按命名空间归类时，对于大量命名空间的处理方法，`top` 或 `all`，默认 `top`
+        - `top`：仅展示编辑数前 N 的命名空间，其余合并为 `其他命名空间`
+        - `all`：展示全部命名空间
     - `TOP_NAMESPACE_LIMIT`：Top 展示的命名空间数量（正整数，默认 `10`）
 - `CHART_SORT_MODE=sum`
   - 输出按月总贡献图（单序列）
@@ -130,7 +128,7 @@
   - 注册日期精确到日（例如 `2001-01-21`），标记位置按月对齐（xAxis），Y坐标固定为 `0`
   - 注册时间提示仅在鼠标悬停到标记图标时展示
 - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
-
+</details>
 
 ## Workflow 行为
 
