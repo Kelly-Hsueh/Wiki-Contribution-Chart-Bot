@@ -12,6 +12,17 @@ DEFAULT_USER_AGENT: str = (
     "contact@example.org) requests/2.x")
 
 
+def parse_bool_env(raw_value: str, *, default: bool) -> bool:
+    value = raw_value.strip().lower()
+    if not value:
+        return default
+    if value == "true":
+        return True
+    if value == "false":
+        return False
+    raise RuntimeError("仅支持 true/false 或留空")
+
+
 def load_env_file(env_path: str = ".env") -> None:
     path = Path(env_path)
     if not path.exists() or not path.is_file():
@@ -91,6 +102,58 @@ def api_post_json(
         return safe_get_json(response)
     except Exception as exc:
         raise RuntimeError(f"{error_context}: {exc}") from exc
+
+
+def fetch_account_registrations(
+    session: requests.Session,
+    wiki_api: str,
+    users: list[str],
+    timeout: int,
+    max_lag: int,
+) -> dict[str, str]:
+    """查询多个用户的注册时间。"""
+    if not users:
+        return {}
+
+    params: dict[str, Any] = {
+        "action": "query",
+        "format": "json",
+        "formatversion": 2,
+        "list": "users",
+        "ususers": "|".join(users),
+        "usprop": "registration",
+        "maxlag": max_lag,
+    }
+
+    data = api_get_json(
+        session=session,
+        wiki_api=wiki_api,
+        params=params,
+        timeout=timeout,
+        error_context="查询用户注册时间失败",
+    )
+
+    if "error" in data:
+        api_error = data["error"]
+        code = api_error.get("code", "unknown")
+        info = api_error.get("info", "no details")
+        raise RuntimeError(
+            f"查询用户注册时间返回 API 错误 code={code}, info={info}")
+
+    users_data = data.get("query", {}).get("users", [])
+    if not isinstance(users_data, list):
+        raise RuntimeError("API 响应格式异常: query.users 不是列表")
+
+    registrations: dict[str, str] = {}
+    for user_info in users_data:
+        if not isinstance(user_info, dict):
+            continue
+        username = user_info.get("name")
+        registration = user_info.get("registration")
+        if isinstance(username, str) and isinstance(registration, str):
+            registrations[username] = registration
+
+    return registrations
 
 
 def get_login_token(

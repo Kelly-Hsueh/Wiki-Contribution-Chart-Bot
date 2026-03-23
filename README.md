@@ -44,7 +44,6 @@
 
 - `WIKI_USER`
   - 要统计贡献的用户名
-
     可带`User:`前缀，但任何别名（如`U:`）都不支持；建议不加
     - 根据 MediaWiki API 文档[[Special:ApiHelp/query]]，支持 `用户名、​IP、​临时用户和​跨wiki用户名（例如“前缀>示例用户”）`（“跨wiki用户名”指跨维基导入的页面修订历史中被导入的用户名，并非允许[[Special:Interwiki]]的跨Wiki链接）
   - 支持查询多用户：使用 `|` 或 `%7C`（管道符）分隔多个用户名，例如 `User1|User2|User3`
@@ -112,8 +111,12 @@
   - 逗号分隔整数：指定排除的命名空间，例如 `1,2,3,5,7,9`
 - `CHART_SORT_MODE`：图表方案（`namespace`、`sum` 或 `account`，默认 `namespace`）
 - `NAMESPACE_MODE`：命名空间序列展示策略（`top` 或 `all`，仅用于 `namespace` 模式）
-- `TOP_NAMESPACE_LIMIT`：Top 命名空间数量（正整数，默认 `10`，仅用于 `namespace` 模式）
+- `TOP_NAMESPACE_LIMIT`：Top 展示的命名空间数量（正整数，默认 `10`，仅用于 `namespace` 模式）
 - `CHART_SERIES_TYPE`：图表初始系列类型（`bar` 或 `line`，默认 `bar`）
+- `ACCOUNT_REG_MARKER_ENABLED`：注册时间标记开关（`true` 或 `false`，默认 `false`）
+- `ACCOUNT_REG_MARKER_OUT_OF_RANGE`：越界标记处理策略（）
+  - `clamp_to_first`（默认）：将越界标记钳制到首个可见月
+  - `hide`：不显示越界标记
 - `USER_AGENT`：建议通过环境变量配置（**重要！**）
 - `DISPLAY_NAME`：未设置或为空时，自动从 `WIKI_USER` 提取第一个用户名作为默认值
   - 若 `WIKI_USER` 包含多个用户（以 `|` 或 `%7C` 分隔），只使用第一个用户作为 `DISPLAY_NAME`
@@ -127,18 +130,25 @@
 
 - `CHART_SORT_MODE=namespace`（默认）
   - 输出按月命名空间堆叠图
-  - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
   - 每个系列的名称通过 MediaWiki API 获取实际的命名空间名称
-  - 当命名空间较多时，默认启用 `Top N + Other`，降低 legend 拥挤风险
+  - 当命名空间较多时，默认启用 `NAMESPACE_MODE=top`，降低 legend 拥挤风险
+    - `TOP_NAMESPACE_LIMIT`：Top 展示的命名空间数量（正整数，默认 `10`）
 - `CHART_SORT_MODE=sum`
   - 输出按月总贡献图（单序列）
-  - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
 - `CHART_SORT_MODE=account`
   - 输出按月账户堆叠图（多用户模式）
   - 在 `WIKI_USER` 中使用 `|` 或 `%7C` 分隔多个用户名，例如：`User1|User2|User3`
   - 拉取所有指定用户的贡献并合并，按照 `WIKI_USER` 中的用户顺序在图表中排列
-  - 按照通用逻辑对贡献进行命名空间过滤（自动排除用户命名空间与讨论页，或按 `EXCLUDED_NAMESPACES` 配置）
-  - `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
+- 注册时间标记（全模式可选）
+  - `ACCOUNT_REG_MARKER_ENABLED`：是否启用注册时间标记（`true` 或 `false`，默认 `false`）
+  - `ACCOUNT_REG_MARKER_OUT_OF_RANGE`：当注册时间早于统计首月时的处理策略
+    - `clamp_to_first`（默认）：将标记钳制到首个可见月，标签中注明“早于统计区间”
+    - `hide`：不显示那些出界的标记
+  - 所有注册标记归集到独立的 `注册时间` 散点系列（legend 可单独开关）
+  - 注册日期精确到日（例如 `2001-01-21`），标记位置按月对齐（xAxis），Y坐标固定为 `0`
+  - 注册时间提示仅在鼠标悬停到标记图标时展示
+- `CHART_SERIES_TYPE` 仅决定初始 `series.type`，后续可通过 `magicType` 在 `line/bar` 间切换
+
 
 ## Workflow 行为
 

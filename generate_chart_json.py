@@ -8,14 +8,20 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from chart_sort_modes import build_option_for_sort_mode, parse_chart_sort_mode
+from chart_sort_modes import (
+    build_option_for_sort_mode,
+    parse_account_reg_marker_out_of_range,
+    parse_chart_sort_mode,
+)
 from chart_sort_modes.namespace_fetcher import fetch_namespaces
 from mw_runtime import (
     DEFAULT_USER_AGENT,
     api_get_json,
     build_session,
+    fetch_account_registrations,
     load_env_file,
     login_with_bot_password,
+    parse_bool_env,
 )
 
 load_env_file()
@@ -140,6 +146,14 @@ BOT_LOGIN_USERNAME: str = os.environ.get("BOT_USERNAME", "").strip()
 BOT_LOGIN_PASSWORD: str = os.environ.get("BOT_PASSWORD", "").strip()
 USERCONTRIBS_LIMIT: str = "max"
 USERCONTRIBS_FALLBACK_LIMIT: str = "499"
+
+# 注册时间标记配置（全模式可用）
+ACCOUNT_REG_MARKER_ENABLED: bool = parse_bool_env(
+    os.environ.get("ACCOUNT_REG_MARKER_ENABLED", "false"),
+    default=False,
+)
+ACCOUNT_REG_MARKER_OUT_OF_RANGE: str = parse_account_reg_marker_out_of_range(
+    os.environ.get("ACCOUNT_REG_MARKER_OUT_OF_RANGE", "clamp_to_first"))
 
 
 def _validate_required_config() -> None:
@@ -332,6 +346,21 @@ def main() -> None:
 
         generated_time = _build_generated_time()
 
+        # 全模式通用：可选注册时间标记
+        account_registrations: dict[str, str] = {}
+        if ACCOUNT_REG_MARKER_ENABLED:
+            users_for_markers = _parse_multiple_users(USER)
+            try:
+                account_registrations = fetch_account_registrations(
+                    session=session,
+                    wiki_api=WIKI_API,
+                    users=users_for_markers,
+                    timeout=REQUEST_TIMEOUT_SECONDS,
+                    max_lag=MAX_LAG,
+                )
+            except RuntimeError as exc:
+                print(f"警告：无法查询账户注册时间: {exc}", file=sys.stderr)
+
         # account 模式：拉取多个用户的贡献（单个 API 请求）
         if CHART_SORT_MODE == "account":
             users = _parse_multiple_users(USER)
@@ -367,6 +396,8 @@ def main() -> None:
                 accounts_contribs=accounts_contribs,
                 account_order=users,
                 is_auto_inferred_namespaces=is_auto_inferred,
+                account_registrations=account_registrations,
+                account_reg_marker_out_of_range=ACCOUNT_REG_MARKER_OUT_OF_RANGE,
             )
         else:
             # namespace 或 sum 模式：拉取单个用户的贡献
@@ -393,6 +424,8 @@ def main() -> None:
                 top_namespace_limit=TOP_NAMESPACE_LIMIT,
                 namespace_map=namespace_map,
                 is_auto_inferred_namespaces=is_auto_inferred,
+                account_registrations=account_registrations,
+                account_reg_marker_out_of_range=ACCOUNT_REG_MARKER_OUT_OF_RANGE,
             )
 
         output_path = Path(OUTPUT_FILE)

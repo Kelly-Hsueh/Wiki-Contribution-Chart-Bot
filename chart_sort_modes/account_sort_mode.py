@@ -4,7 +4,13 @@ from collections import Counter
 from datetime import datetime
 from typing import Any
 
-from chart_sort_modes.utils import build_excluded_namespaces_text
+from chart_sort_modes import (
+    DEFAULT_ACCOUNT_REG_MARKER_OUT_OF_RANGE,
+)
+from chart_sort_modes.utils import (
+    build_excluded_namespaces_text,
+    build_registration_scatter_series,
+)
 
 
 def _group_by_month_and_account(
@@ -91,6 +97,8 @@ def build_option(
     excluded_namespaces: set[int] | None = None,
     is_auto_inferred_namespaces: bool = False,
     namespace_map: dict[int, str] | None = None,
+    account_registrations: dict[str, str] | None = None,
+    account_reg_marker_out_of_range: str = DEFAULT_ACCOUNT_REG_MARKER_OUT_OF_RANGE,
 ) -> dict[str, Any]:
     """构建按账户堆叠的图表选项。
 
@@ -103,9 +111,13 @@ def build_option(
         excluded_namespaces: 被排除的命名空间集合（用于显示信息）
         is_auto_inferred_namespaces: 是否为自动推断的排除命名空间
         namespace_map: 命名空间映射（用于显示名称）
+        account_registrations: 账户注册时间映射（如果有的话）
+        account_reg_marker_out_of_range: 越界 marker 处理策略
     """
     if excluded_namespaces is None:
         excluded_namespaces = set()
+    if account_registrations is None:
+        account_registrations = {}
 
     full_months, account_month_counts, _ = _group_by_month_and_account(
         accounts_contribs)
@@ -131,6 +143,16 @@ def build_option(
             "data": account_month_counts.get(account, [0] * len(x_labels)),
             **_build_series_style(),
         })
+
+    if registration_series := build_registration_scatter_series(
+        x_labels=x_labels,
+        full_months=full_months,
+        account_registrations=account_registrations,
+        account_order=account_order,
+        out_of_range_strategy=account_reg_marker_out_of_range,
+    ):
+        legend_data.append("注册时间")
+        series.append(registration_series)
 
     excluded_ns_text = build_excluded_namespaces_text(
         excluded_namespaces, namespace_map, is_auto_inferred_namespaces
@@ -171,9 +193,6 @@ def build_option(
         "toolbox": {
             "show": True,
             "feature": {
-                "dataZoom": {
-                    "yAxisIndex": "none"
-                },
                 "magicType": {
                     "type": ["line", "bar"],
                     "option": {
@@ -215,12 +234,9 @@ def build_option(
             "startValue": 0,
             "end": 100
         }, {
-            "show": True,
-            "xAxisIndex": [0],
             "type": "slider",
-            "bottom": 10,
-            "start": 0,
-            "end": 100
+            "show": True,
+            "xAxisIndex": [0]
         }],
         "legend": {
             "type": "scroll",
@@ -230,6 +246,9 @@ def build_option(
             "data": legend_data
         },
         "xAxis": {
+            "axisLabel": {
+                "margin": 10
+            },
             "type": "category",
             "boundaryGap": chart_series_type == "bar",
             "data": x_labels

@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Any
+
+from chart_sort_modes import (
+    DEFAULT_ACCOUNT_REG_MARKER_OUT_OF_RANGE,
+    REGISTRATION_MARKER_COLOR,
+    REGISTRATION_MARKER_SYMBOL,
+)
+
 
 def build_namespace_name(ns_id: int, namespace_map: dict[int, str] | None = None) -> str:
     """根据命名空间 ID 获取显示名称。
@@ -53,3 +62,75 @@ def build_excluded_namespaces_text(
 
     excluded_text = "、".join(preview_labels)
     return f"已排除：{excluded_text} 等{len(sorted_ids)}个命名空间"
+
+
+def build_registration_scatter_series(
+    x_labels: list[str],
+    full_months: list[tuple[int, int]],
+    account_registrations: dict[str, str] | None = None,
+    account_order: list[str] | None = None,
+    out_of_range_strategy: str = DEFAULT_ACCOUNT_REG_MARKER_OUT_OF_RANGE,
+) -> dict[str, Any] | None:
+    """构建通用注册时间散点系列。"""
+    if not account_registrations or not x_labels or not full_months:
+        return None
+
+    start_year, start_month = full_months[0]
+    ordered_accounts = account_order or list(account_registrations.keys())
+    registration_scatter_data: list[dict[str, Any]] = []
+
+    for account_name in ordered_accounts:
+        registration_iso = account_registrations.get(account_name)
+        if not registration_iso:
+            continue
+
+        try:
+            reg_dt = datetime.strptime(registration_iso, "%Y-%m-%dT%H:%M:%SZ")
+            reg_year, reg_month, reg_day = reg_dt.year, reg_dt.month, reg_dt.day
+        except ValueError:
+            continue
+
+        if (reg_year, reg_month) < (start_year, start_month):
+            if out_of_range_strategy == "hide":
+                continue
+            if out_of_range_strategy != "clamp_to_first":
+                continue
+            month_idx = 0
+            display_date = (
+                f"{reg_year}年{reg_month:02d}月{reg_day:02d}日（早于统计区间）"
+            )
+        else:
+            try:
+                month_idx = full_months.index((reg_year, reg_month))
+            except ValueError:
+                continue
+            display_date = f"{reg_month:02d}月{reg_day:02d}日"
+
+        registration_scatter_data.append({
+            "name": f"{account_name} 注册时间",
+            "value": [x_labels[month_idx], 0],
+            "tooltip": {
+                "formatter": f"{account_name}<br/>注册于{display_date}",
+                "position": "top",
+            },
+        })
+
+    if not registration_scatter_data:
+        return None
+
+    return {
+        "name": "注册时间",
+        "type": "scatter",
+        "symbol": REGISTRATION_MARKER_SYMBOL,
+        "symbolSize": 12,
+        "symbolOffset": [0, "60%"],
+        "data": registration_scatter_data,
+        "color": REGISTRATION_MARKER_COLOR,
+        "itemStyle": {
+            "color": REGISTRATION_MARKER_COLOR,
+        },
+        "tooltip": {
+            "trigger": "item",
+            "position": "top",
+        },
+    }
