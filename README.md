@@ -44,7 +44,7 @@
 
 | 配置项 | Secrets | Variables | 说明 |
 |:---:|:---:|:---:|:---|
-| `WIKI_USER` | ✅ | ✅ | <ul><li>要统计贡献的用户名<br>可带`User:`前缀，但任何别名（如`U:`）都不支持；建议不加<ul><li>根据 MediaWiki API 文档[[Special:ApiHelp/query]]，支持 `用户名、​IP、​临时用户和​跨wiki用户名（例如“前缀>示例用户”）`（“跨wiki用户名”指跨维基导入的页面修订历史中被导入的用户名，并非允许[[Special:Interwiki]]的跨Wiki链接）</li></ul></li><li>支持查询多用户：使用 `\|` 或 `%7C`（管道符）分隔多个用户名，例如 `User1\|User2\|User3`<ul><li>在 `CHART_SORT_MODE=namespace` 或 `sum` 模式下：合并所有用户的贡献数据</li><li>在 `CHART_SORT_MODE=account` 模式下：按用户分别统计并按输入顺序在图表中堆叠展示</li><li>`DISPLAY_NAME` 会默认使用 `WIKI_USER` 中的第一个用户名作为显示名称</li></ul></li></ul> |
+| `WIKI_USER` | ✅ | ✅ | <ul><li>要统计贡献的用户名<br><details><summary>可带`User:`前缀，但任何别名（如`U:`）都不支持；建议不加</summary>根据 MediaWiki API 文档[[Special:ApiHelp/query]]，支持 `用户名、​IP、​临时用户和​跨wiki用户名（例如“前缀>示例用户”）`（“跨wiki用户名”指跨维基导入的页面修订历史中被导入的用户名，并非允许[[Special:Interwiki]]的跨Wiki链接）</details></li><li>支持查询多用户：使用 `\|` 或 `%7C`（管道符）分隔多个用户名，例如 `User1\|User2\|User3`<ul><li>在 `CHART_SORT_MODE=namespace` 或 `sum` 模式下：合并所有用户的贡献数据</li><li>在 `CHART_SORT_MODE=account` 模式下：按用户分别统计并按输入顺序在图表中堆叠展示</li><li>`DISPLAY_NAME` 会默认使用 `WIKI_USER` 中的第一个用户名作为显示名称</li></ul></li></ul> |
 | `DISPLAY_NAME` | ✅ | ✅ | <ul><li>图表中显示的用户名/别名</li><li>未设置或为空时，自动从 `WIKI_USER` 提取第一个用户作为默认值（若 `WIKI_USER` 包含多个用户，则只使用第一个）</li></ul> |
 | `WIKI_PAGE` | ✅ | ✅ | <ul><li>要覆盖写入的页面标题，通常是个人用户子页面</li><li>需为完整页面名称，例如：`User:ExampleBot/ContributionChart`</li></ul> |
 | `USER_AGENT` | ✅ | ✅ | <ul><li>建议配置为：`WikiChartBot/1.0 (https://github.com/<your‑org>/<your‑仓库>; <your-noreply-email>) requests/2.x`<ul><li>即在括号中填写你的 GitHub 仓库 URL 和可联系邮箱。</li></ul></li><li>若包含私人邮箱/联系信息，建议放 secret</li></ul> |
