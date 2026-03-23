@@ -42,6 +42,8 @@
 
 ### 通用配置项
 
+Workflow 兼容策略：同时支持 Secrets 和 Variables 的项均为 **Secrets 优先**，可按实际情况选择。
+
 | 配置项 | Secrets | Variables | 说明 |
 |:---:|:---:|:---:|:---|
 | `WIKI_USER` | ✅ | ✅ | <ul><li>要统计贡献的用户名<br><details><summary>可带`User:`前缀，但任何别名（如`U:`）都不支持；建议不加</summary>根据 MediaWiki API 文档[[Special:ApiHelp/query]]，支持 `用户名、​IP、​临时用户和​跨wiki用户名（例如“前缀>示例用户”）`（“跨wiki用户名”指跨维基导入的页面修订历史中被导入的用户名，并非允许[[Special:Interwiki]]的跨Wiki链接）</details></li><li>支持查询多用户：使用 `\|` 或 `%7C`（管道符）分隔多个用户名，例如 `User1\|User2\|User3`<ul><li>在 `CHART_SORT_MODE=namespace` 或 `sum` 模式下：合并所有用户的贡献数据</li><li>在 `CHART_SORT_MODE=account` 模式下：按用户分别统计并按输入顺序在图表中堆叠展示</li><li>`DISPLAY_NAME` 会默认使用 `WIKI_USER` 中的第一个用户名作为显示名称</li></ul></li></ul> |
@@ -60,13 +62,11 @@
 | `ACCOUNT_REG_MARKER_OUT_OF_RANGE` |  | ✅ | <ul><li>可选，`clamp_to_first` 或 `hide`</li><li>默认 `clamp_to_first`：注册时间早于统计区间时的处理策略</li></ul> |
 | `EDIT_TAG_CANDIDATES` |  | ✅ | <ul><li>可选，逗号分隔标签候选列表，按顺序尝试，例如：`bot, Bot`</li><li>默认值：`bot, Bot`</li><li>留空时不尝试任何标签，仅执行无标签编辑</li></ul> |
 
-> Workflow 兼容策略：同时支持二者的项均为 **Secrets 优先，并支持 Variables**，可按实际情况选择。
-
 > [!NOTE]
 > 仓库可见性提示：将仓库设为 Public 通常可减少（或避免）GitHub Actions Minutes 的消耗；具体以 GitHub 当前计费政策为准。
 
 <details>
-<summary><ins>图表行为</ins></summary>
+<summary><ins>图表行为配置项</ins>（Variables）</summary>
   
 - `CHART_SORT_MODE=namespace`（默认）
   - 输出按月命名空间堆叠图
