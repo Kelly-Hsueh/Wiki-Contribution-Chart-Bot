@@ -96,7 +96,7 @@ def build_registration_scatter_series(
             "name": f"{account_name} 注册时间",
             "value": [x_labels[month_idx], 0],
             "tooltip": {
-                "formatter": f"{account_name}<br/>注册于{display_date}",
+                "formatter": f"{account_name}\n注册于{display_date}",
                 "position": "top",
             },
         })
