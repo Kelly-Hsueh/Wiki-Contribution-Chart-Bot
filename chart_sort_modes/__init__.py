@@ -7,8 +7,8 @@ AccountRegMarkerOutOfRange = Literal["clamp_to_first", "hide"]
 MultiSeriesRenderMode = Literal["stacked", "dataset"]
 
 _SUPPORTED_CHART_SORT_MODES: set[str] = {"namespace", "sum", "account"}
-DEFAULT_MULTI_SERIES_RENDER_MODE: MultiSeriesRenderMode = "stacked"
-_SUPPORTED_MULTI_SERIES_RENDER_MODES: set[str] = {"stacked", "dataset"}
+DEFAULT_CHART_MULTI_SERIES_MODE: MultiSeriesRenderMode = "stacked"
+_SUPPORTED_CHART_MULTI_SERIES_MODES: set[str] = {"stacked", "dataset"}
 
 DEFAULT_ACCOUNT_REG_MARKER_OUT_OF_RANGE: AccountRegMarkerOutOfRange = "clamp_to_first"
 SUPPORTED_ACCOUNT_REG_MARKER_OUT_OF_RANGE: set[str] = {"clamp_to_first", "hide"}
@@ -35,11 +35,11 @@ def parse_chart_sort_mode(raw_value: str) -> ChartSortMode:
 def parse_multi_series_render_mode(raw_value: str) -> MultiSeriesRenderMode:
     value = raw_value.strip().lower()
     if not value:
-        return DEFAULT_MULTI_SERIES_RENDER_MODE
-    if value not in _SUPPORTED_MULTI_SERIES_RENDER_MODES:
+        return DEFAULT_CHART_MULTI_SERIES_MODE
+    if value not in _SUPPORTED_CHART_MULTI_SERIES_MODES:
         raise RuntimeError(
-            "环境变量 MULTI_SERIES_RENDER_MODE 仅支持 stacked 或 dataset，"
-            "例如 MULTI_SERIES_RENDER_MODE=stacked")
+            "环境变量 CHART_MULTI_SERIES_MODE 仅支持 stacked 或 dataset，"
+            "例如 CHART_MULTI_SERIES_MODE=stacked")
     return value  # type: ignore[return-value]
 
 
